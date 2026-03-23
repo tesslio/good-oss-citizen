@@ -29,7 +29,7 @@ The tile has three layers:
 
 ## Research
 
-Every rule and skill instruction traces back to documented failure modes from real OSS projects. See [RESEARCH.md](https://github.com/tesslio/good-oss-citizen/blob/main/RESEARCH.md) for all 16 findings with sources.
+Every rule and skill instruction traces back to documented failure modes from real OSS projects. See [RESEARCH.md](https://github.com/tesslio/good-oss-citizen/blob/main/tiles/good-oss-citizen/RESEARCH.md) for all 16 findings with sources.
 
 ## Blog posts
 
