@@ -1,0 +1,20 @@
+name: Publish
+
+permissions:
+  id-token: write
+  contents: read
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: tesslio/action@main
+        with:
+          token: ${{ secrets.TESSL_TOKEN }}
+          command: "tile publish"
+          args: "tiles/good-oss-citizen --bump patch"

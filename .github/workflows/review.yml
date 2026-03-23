@@ -1,0 +1,25 @@
+name: Review Skills
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        skill:
+          - tiles/good-oss-citizen/skills/recon/SKILL.md
+          - tiles/good-oss-citizen/skills/propose/SKILL.md
+          - tiles/good-oss-citizen/skills/preflight/SKILL.md
+    steps:
+      - uses: tesslio/action@main
+        with:
+          token: ${{ secrets.TESSL_TOKEN }}
+          command: "skill review"
+          args: "${{ matrix.skill }}"
