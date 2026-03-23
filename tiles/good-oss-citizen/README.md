@@ -1,5 +1,7 @@
 # good-oss-citizen
 
+[![tessl](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.tessl.io%2Fv1%2Fbadges%2Ftessl-labs%2Fgood-oss-citizen)](https://tessl.io/registry/tessl-labs/good-oss-citizen)
+
 Rules, skills, and scripts that teach AI agents how to contribute to open source projects without being the villain.
 
 ## Install
@@ -27,7 +29,7 @@ The tile has three layers:
 
 ## Research
 
-Every rule and skill instruction traces back to documented failure modes from real OSS projects. See [RESEARCH.md](RESEARCH.md) for all 16 findings with sources.
+Every rule and skill instruction traces back to documented failure modes from real OSS projects. See [RESEARCH.md](https://github.com/tesslio/good-oss-citizen/blob/main/RESEARCH.md) for all 16 findings with sources.
 
 ## Blog posts
 
