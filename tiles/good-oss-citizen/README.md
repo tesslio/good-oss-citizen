@@ -1,5 +1,7 @@
 # good-oss-citizen
 
+[![tessl](https://img.shields.io/endpoint?url=https%3A%2F%2Fapi.tessl.io%2Fv1%2Fbadges%2Ftessl-labs%2Fgood-oss-citizen)](https://tessl.io/registry/tessl-labs/good-oss-citizen)
+
 Rules, skills, and scripts that teach AI agents how to contribute to open source projects without being the villain.
 
 ## Install
