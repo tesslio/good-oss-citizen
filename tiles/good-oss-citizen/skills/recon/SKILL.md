@@ -35,17 +35,17 @@ The script returns the full text of AI_POLICY.md, CODE_OF_CONDUCT.md, and CONTRI
 
 Run ALL three commands — these are not optional:
 ```bash
-bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh issue OWNER/REPO NUMBER
+bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh issue OWNER/REPO ISSUE_NUMBER
 ```
 ```bash
-bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh issue-comments OWNER/REPO NUMBER
+bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh issue-comments OWNER/REPO ISSUE_NUMBER
 ```
 ```bash
 bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh related-prs OWNER/REPO ISSUE_NUMBER
 ```
 After running `issue-comments`, answer this question before anything else: **Is this issue claimed by another contributor?** A claim is any comment where someone expresses intent to work on the issue: "I'd like to work on this", "I'll take this", "claiming this", "I'm working on this", "I can take this", "let me handle this", "I've started a branch for this", "assigned to me", mentioning having a PR ready, or any equivalent in any language.
 
-If ANYONE has claimed it: **STOP — do NOT proceed to later steps or write code.** Tell the contributor who claimed it (username and date), warn that competing PRs are bad etiquette and will likely be rejected, then run `issues-open` to list alternatives. Include the AI disclosure format for alternatives. This is a hard stop.
+If ANYONE has claimed it: **STOP — do NOT proceed to later steps or write code.** Tell the contributor who claimed it (username and date), warn that competing PRs are bad etiquette and will likely be rejected, then run `issues-open` to list alternatives and run `disclosure-format OWNER/REPO` so you can include the exact AI disclosure template for those alternatives. If the project has no AI policy, include the voluntary disclosure template instead. This is a hard stop.
 
 If NOT claimed, continue with remaining checks:
 - Cross-reference the issue output (labels, assignment) against any restrictions found in Step 2. If the AI policy restricts AI usage on issues with specific labels (e.g., "good first issue") and THIS issue has that label: **STOP.** Tell the contributor about the restriction, explain why it exists (these issues are learning opportunities for newcomers — AI defeats their purpose), and list alternative issues they CAN work on with AI.

@@ -127,7 +127,7 @@ Summarize as a checklist with pass/fail/warning for each check. For any failures
 ## Required output artifacts
 
 Before you are done, verify these artifacts exist:
-- **`pr_description.md`** (or equivalent PR description output) — with AI disclosure section, issue reference, and all PR template sections filled. This is a required deliverable, not optional.
+- **PR description draft** (e.g., assistant output or a local-only `pr_description.md`) — with AI disclosure section, issue reference, and all PR template sections filled. This is a required deliverable, not optional. If you place it in a file, keep it out of the PR diff: do **not** add, commit, or push that file to the repository.
 - **Git commit** with the correct message format (e.g., Conventional Commits if required). The commit must exist as an actual artifact, not just a description in a checklist.
 - **Git branch** with the correct naming convention. The branch must exist, not just be claimed in a checklist.
 
