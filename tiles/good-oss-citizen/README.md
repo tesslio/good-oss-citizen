@@ -16,7 +16,7 @@ Install on your fork of whatever OSS project you're contributing to. The tile lo
 
 AI agents write working code but ignore everything around it: contribution guidelines, AI policies, prior rejected PRs, claimed issues, DCO requirements, changelog updates. This tile teaches the agent to check all of that before submitting.
 
-**Without the tile:** 15% on OSS contribution process (while writing perfect code).
+**Without the tile:** agents score ~22% on OSS contribution process checks (while writing perfectly functional code).
 **With the tile:** 99%.
 
 ## How it works
@@ -33,8 +33,8 @@ Every rule and skill instruction traces back to documented failure modes from re
 
 ## Blog posts
 
-- [Our AI is the bright kid with no manners](/link-to-part-1) — why AI PRs fail and what the tile does about it
-- [Our AI is the bright kid with no manners, part 2](/link-to-part-2) — how I built and tested the tile
+- [Our AI is the bright kid with no manners](https://jfrog.com/blog/our-ai-is-the-bright-kid-with-no-manners/) — why AI PRs fail and what the tile does about it
+- [Our AI is the bright kid with no manners, part 2](https://jfrog.com/blog/our-ai-is-the-bright-kid-with-no-manners-part-2/) — how I built and tested the tile
 
 ## For maintainers
 
@@ -53,7 +53,7 @@ You don't have to ban AI — you can guide it instead. Add a `tessl.json` to you
 
 Then mention it in your README, CONTRIBUTING.md, or AI_POLICY.md:
 
-> We accept considerate AI-assisted contributions. Install `npx tessl install tessl-labs/good-oss-citizen` first.
+> We accept considerate AI-assisted contributions. Install `tessl install tessl-labs/good-oss-citizen` in your fork first.
 
 AI agents read contribution guidelines before they start working. When an agent sees this instruction, it installs the tile and invokes it automatically — no manual setup from the contributor required.
 

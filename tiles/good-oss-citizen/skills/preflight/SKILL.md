@@ -7,19 +7,22 @@ description: "Runs a structured 9-check pre-submission checklist against an open
 
 Run a pre-submission checklist before the contributor hits "Create Pull Request." Only applies to contributions to external open source projects — skip for internal or personal projects. This skill assumes recon has been done and the venue decision has been made. If a PR is not the right venue, this skill should not be running — go back to propose.
 
-## Check 1: AI policy compliance
+## Check 1: AI disclosure in PR description (MANDATORY)
 
-Based on recon findings:
-- If the project requires AI disclosure, verify it is present in the correct format (commit tag, PR description section, checkbox, etc.).
-- If the project bans AI contributions, stop. Do not proceed.
-- If the project has no AI policy, STILL add voluntary disclosure to the PR description. This is not optional — transparency builds trust and prevents the appearance of hiding AI involvement. Draft a disclosure section for the contributor.
+Every PR description MUST contain an AI disclosure section. Check for it first — this is the most commonly missed item.
+
+- **Project requires AI disclosure:** verify it matches the exact format from AI_POLICY.md.
+- **Project has no AI policy:** add voluntary disclosure: "**AI Disclosure:** Code drafted with [tool name], reviewed and modified by the contributor. Tests [written manually / reviewed by contributor]. All code was reviewed and tested by the human contributor before submission."
+- **Project bans AI contributions:** stop. Do not proceed.
 
 Disclosure should be specific: which tool, what it was used for, what was human-written vs. AI-assisted.
 
 | Quality | Example |
 |---------|---------|
-| ❌ Insufficient | "I used AI to help write this." |
-| ✅ Acceptable | "Code drafted with Claude Code, reviewed and modified by me, tests written manually." |
+| Bad | "I used AI to help write this." |
+| Good | "Code drafted with Claude Code, reviewed and modified by me, tests written manually." |
+
+**Self-check:** Can you see an "AI Disclosure" or equivalent section in the PR description? If not, add one now.
 
 [Research basis: Finding 5](https://github.com/tesslio/good-oss-citizen/blob/main/RESEARCH.md#finding-5-ai-policy-is-local-and-it-varies-widely)
 
@@ -51,7 +54,8 @@ If no template exists, verify the PR description at minimum contains:
 
 Verify the contribution matches project conventions discovered during recon:
 - Code formatting matches `.editorconfig`, linter, and formatter configs.
-- Commit messages match the project's convention (Conventional Commits, imperative mood, signed-off, etc.).
+- Commit messages match the project's convention (Conventional Commits, imperative mood, signed-off, etc.). Create an actual commit with the correct format — e.g., `fix(queue): raise QueueFullError when queue is at capacity`. Do not just describe the format in the PR checklist; produce the artifact.
+- Branch naming matches the project's convention. Create the branch with the correct name — e.g., `fix/2-queue-full-error`. Do not just claim compliance in the checklist.
 - Import ordering, naming conventions, and comment style match existing code.
 - If no config files exist, check 3-5 existing files in the same directory for: indentation (spaces vs tabs, 2 vs 4), line length, comment style, naming conventions (camelCase vs snake_case). Match the majority pattern.
 
@@ -61,8 +65,7 @@ Verify the contribution matches project conventions discovered during recon:
 
 - Verify tests are included if the project expects them.
 - Verify tests match the project's testing patterns (framework, file naming, assertion style, fixtures).
-- Verify the contributor has run the project's CI checks locally (linters, test suite, build) and they pass.
-- Do not rely on CI to catch problems — that shifts the burden to maintainers.
+- Run ALL of the project's local checks — both tests AND linters. If CONTRIBUTING.md says `make test` and `make lint`, run both. If it says `npm test` and `npm run lint`, run both. Do not run only tests and skip linting. Do not rely on CI to catch problems — that shifts the burden to maintainers.
 
 [Research basis: Finding 4](https://github.com/tesslio/good-oss-citizen/blob/main/RESEARCH.md#finding-4-accepted-contributions-are-usually-scoped-explicit-and-test-backed)
 
@@ -72,9 +75,9 @@ Verify the contribution matches project conventions discovered during recon:
 - Check for other metadata requirements: `AUTHORS` file updates, version bumps, etc.
 - This is one of the most commonly missed steps — agents fix the code but forget the housekeeping.
 
-## Check 6: Legal requirements
+## Check 6: Legal requirements (DCO/CLA)
 
-- If DCO sign-off is required, verify the contributor (not the agent) has added `Signed-off-by:` to commits.
+- If DCO sign-off is required: include an explicit instruction in the PR description — "**DCO Notice:** All commits must include `Signed-off-by:` via `git commit -s`. This is a legal attestation the contributor must make personally — the AI agent cannot sign on your behalf." Do NOT just check a box in the PR template.
 - If CLA is required, remind the contributor they will need to sign it.
 - If the license has compatibility concerns with AI tool terms, flag them.
 
@@ -120,5 +123,12 @@ If the answer to any of these is no, the PR is not ready.
 ## Produce the preflight report
 
 Summarize as a checklist with pass/fail/warning for each check. For any failures, explain what needs to change before submission. For warnings, explain the risk and let the contributor decide.
+
+## Required output artifacts
+
+Before you are done, verify these artifacts exist:
+- **`pr_description.md`** (or equivalent PR description output) — with AI disclosure section, issue reference, and all PR template sections filled. This is a required deliverable, not optional.
+- **Git commit** with the correct message format (e.g., Conventional Commits if required). The commit must exist as an actual artifact, not just a description in a checklist.
+- **Git branch** with the correct naming convention. The branch must exist, not just be claimed in a checklist.
 
 Do not submit the PR. That is the contributor's action.

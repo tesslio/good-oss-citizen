@@ -125,10 +125,11 @@ Present each open issue with its number, title, and any restrictions (assigned? 
 If AI_POLICY.md defines a disclosure template, copy-paste it verbatim so the contributor has it ready. Example: "For your PR, you'll need this section:" followed by the exact template from the policy file.
 
 **Step C — If the restriction is "no AI on this issue" (e.g., good-first-issue):**
-Help the contributor succeed WITHOUT AI on the restricted issue:
+Explain WHY: good-first-issue labels are reserved for newcomers to learn the codebase hands-on — AI assistance defeats their purpose. Note the consequence from AI_POLICY.md if stated (e.g., "PRs will be closed"). Then help the contributor succeed WITHOUT AI on the restricted issue:
 - Quote any approach hints from the issue description (e.g., "see the pattern in env.go")
 - Point to specific code files or functions the issue references
-- Reference the project's recommended learning path from AI_POLICY.md if it exists (e.g., "solve a good-first-issue manually first, then use AI on harder issues")
+- Summarize relevant conventions from the recon report (test framework, commit format, etc.)
+- State the recommended learning path explicitly as a progression: "The project recommends: complete a good-first-issue without AI to build codebase familiarity, then use AI assistance on more complex issues where maintainers welcome it." If AI_POLICY.md defines a specific path, quote it. Do not just imply the path through option structure — articulate it as the project's recommended progression.
 
 [Research basis: Finding 4](https://github.com/tesslio/good-oss-citizen/blob/main/RESEARCH.md#finding-4-accepted-contributions-are-usually-scoped-explicit-and-test-backed)
 

@@ -29,7 +29,7 @@ The script returns the full text of AI_POLICY.md, CODE_OF_CONDUCT.md, and CONTRI
 - If AI contributions are **banned** (any phrasing): **STOP.** Tell the contributor: the project bans AI contributions, explain the consequences, and suggest they can still contribute WITHOUT AI (provide project conventions from later steps if helpful).
 - If AI **disclosure is required** (any phrasing): continue, note the requirement.
 - If there are **conditions or restrictions** (e.g., AI banned on good-first-issue labels, AI allowed only with full human review): continue, note them.
-- If **no AI policy** exists: continue, recommend voluntary disclosure.
+- If **no AI policy** exists: continue, recommend voluntary disclosure. Include this in your recon report: "This project has no AI policy. Voluntary disclosure is recommended — it builds trust and protects you if the project adds a policy later."
 
 ## Step 3: Should I work on THIS issue? (issue checks)
 
@@ -43,9 +43,12 @@ bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.s
 ```bash
 bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh related-prs OWNER/REPO ISSUE_NUMBER
 ```
-Parse each output and act:
-- Read the issue-comments output carefully and determine whether anyone has **claimed** this issue. A claim is any comment where someone expresses intent to work on the issue. This includes but is not limited to: "I'd like to work on this", "I'll take this", "claiming this", "I'm working on this", "I can take this", "let me handle this", "I've started a branch for this", "assigned to me", or any equivalent in any language. Also check: does the comment mention having a PR ready, or being partway through a fix? That's a claim too. If ANYONE has claimed it: tell the contributor who claimed it (username and date), warn that competing PRs are bad etiquette, then run `issues-open` to list alternatives they CAN work on.
-- Cross-reference the issue output (labels, assignment) against any restrictions found in Step 2. If the AI policy restricts AI usage on issues with specific labels (e.g., "good first issue") and THIS issue has that label: **STOP.** Tell the contributor about the restriction, explain why it exists, and list alternative issues they CAN work on with AI.
+After running `issue-comments`, answer this question before anything else: **Is this issue claimed by another contributor?** A claim is any comment where someone expresses intent to work on the issue: "I'd like to work on this", "I'll take this", "claiming this", "I'm working on this", "I can take this", "let me handle this", "I've started a branch for this", "assigned to me", mentioning having a PR ready, or any equivalent in any language.
+
+If ANYONE has claimed it: **STOP — do NOT proceed to later steps or write code.** Tell the contributor who claimed it (username and date), warn that competing PRs are bad etiquette and will likely be rejected, then run `issues-open` to list alternatives. Include the AI disclosure format for alternatives. This is a hard stop.
+
+If NOT claimed, continue with remaining checks:
+- Cross-reference the issue output (labels, assignment) against any restrictions found in Step 2. If the AI policy restricts AI usage on issues with specific labels (e.g., "good first issue") and THIS issue has that label: **STOP.** Tell the contributor about the restriction, explain why it exists (these issues are learning opportunities for newcomers — AI defeats their purpose), and list alternative issues they CAN work on with AI.
 - If related-prs returns prior rejected attempts: tell the contributor WHAT was tried, WHO rejected it, and WHY — quote the maintainer. The contributor must adapt their approach to avoid the same mistakes.
 
 ## Step 4: Get disclosure format
@@ -84,7 +87,8 @@ The contributing-requirements script returns the full CONTRIBUTING.md text. Read
 - If changelog updates are required (any phrasing): you must update CHANGELOG.md with the change.
 - If tests are required (any phrasing): you must include regression tests.
 - If conventions-config shows .editorconfig or .pre-commit-config settings: you must follow them exactly (indent_size, line_length, hooks).
-- Use commit-conventions and branch-conventions outputs as the exact format to follow. Do not guess.
+- Use commit-conventions and branch-conventions outputs as the exact format to follow. Do not guess. Create the actual branch and commit with the exact format — do not just describe the convention.
+- If CONTRIBUTING.md mentions running linters (e.g., `make lint`, `npm run lint`), add this to the action items. Both tests AND linters must pass before submission.
 
 ## Step 6: Read files that need human interpretation
 

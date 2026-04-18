@@ -2,13 +2,18 @@
 
 These rules are always active when contributing to open source projects. They are non-negotiable guardrails — the agent must follow them regardless of which skill is invoked or whether any skill is invoked at all.
 
-**GitHub helper script:** For all GitHub API calls, use: `bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh <command> OWNER/REPO [args]`. Key commands: `repo-scan`, `ai-policy`, `disclosure-format`, `issue-comments`, `pr-history`, `related-prs`, `commit-conventions`, `branch-conventions`, `pr-stats`, `issues-open`, `issues-closed`, `file`.
+**GitHub helper script:** For all GitHub API calls, use the helper script (NOT WebFetch, NOT curl, NOT `gh` CLI directly): `bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh <command> OWNER/REPO [args]`. Key commands: `repo-scan`, `ai-policy`, `disclosure-format`, `issue-comments`, `pr-history`, `related-prs`, `commit-conventions`, `branch-conventions`, `pr-stats`, `issues-open`, `issues-closed`, `file`.
 
-**IMPORTANT: Always run the scripts.** When a skill instructs you to run a script command, execute it. Do not skip script calls or substitute your own judgment for their output. The scripts return deterministic, structured data that you must use. Skipping a script call is a bug, not an optimization.
+**IMPORTANT: Always run the scripts — never substitute WebFetch or direct API calls.** The scripts return deterministic, structured data that you must use. WebFetch summarizes content and loses critical details (like claim comments on issues). Skipping a script call or replacing it with WebFetch is a bug, not an optimization.
+
+## Always produce a PR description with AI disclosure
+
+Every contribution you help prepare MUST produce a `pr_description.md` file as a solution artifact. Do not just commit code — the PR description is a required deliverable. This file MUST include an AI disclosure section — no exceptions. If the project requires AI disclosure, use their exact format. If the project has no AI policy, include voluntary disclosure: "**AI Disclosure:** This contribution was prepared with the assistance of [tool name]. [What was AI-assisted vs. human-written.] All code was reviewed and tested by the human contributor before submission." A `Co-Authored-By` trailer is NOT a substitute for a prose AI disclosure section. A PR description without AI disclosure is incomplete.
+[Research basis: Finding 5](https://github.com/tesslio/good-oss-citizen/blob/main/RESEARCH.md#finding-5-ai-policy-is-local-and-it-varies-widely)
 
 ## Handle DCO/CLA correctly
 
-If the project requires DCO sign-off (check for a `DCO` file, `Signed-off-by:` in recent commits, or "signed-off-by" in CONTRIBUTING.md), you MUST tell the contributor: "This project requires DCO sign-off. Use `git commit -s` to add `Signed-off-by:` to your commits. The agent cannot do this for you — it is a legal attestation that only you can make." Never add `Signed-off-by:`, DCO sign-off, or CLA signatures yourself.
+If the project requires DCO sign-off (check for a `DCO` file, `Signed-off-by:` in recent commits, or "signed-off-by" in CONTRIBUTING.md), you MUST explicitly instruct the contributor in both the recon report AND the PR description: "This project requires DCO sign-off. Use `git commit -s` to add `Signed-off-by:` to your commits. The agent cannot do this for you — it is a legal attestation that only you can make." Do NOT just check a box in a PR template — the contributor needs an explicit instruction. Never add `Signed-off-by:`, DCO sign-off, or CLA signatures yourself.
 [Research basis: Finding 10](https://github.com/tesslio/good-oss-citizen/blob/main/RESEARCH.md#finding-10-dcocla-requirements-are-a-hard-boundary-the-agent-must-not-cross)
 
 ## Never submit without human review
@@ -28,12 +33,12 @@ If the project bans AI-generated contributions (in `AI_POLICY.md`, `CONTRIBUTING
 
 ## One issue per PR, minimal diff
 
-Never bundle unrelated changes. Never include "while I was here" cleanup. If the fix requires refactoring, that is a separate PR discussed first. Oversized, unfocused diffs are the single most common reason AI PRs get rejected.
+Never bundle unrelated changes. Never include "while I was here" cleanup. Never reformat code you did not need to change — do not reorganize imports, add whitespace, or apply formatter changes in files unrelated to the fix. If the fix requires refactoring, that is a separate PR discussed first. Oversized, unfocused diffs are the single most common reason AI PRs get rejected.
 [Research basis: Finding 4](https://github.com/tesslio/good-oss-citizen/blob/main/RESEARCH.md#finding-4-accepted-contributions-are-usually-scoped-explicit-and-test-backed)
 
 ## No unsolicited refactoring
 
-If no issue exists requesting the change, do not generate a PR. Before recommending the contributor open an issue, FIRST search the project's closed issues and rejected PRs to check if this change has been proposed and rejected before. If it has, tell the contributor what was tried, who rejected it, and why — quote the maintainer's key objection verbatim. They need this context before deciding whether to even open a discussion. If there is no prior history, recommend opening an issue or discussion first.
+If no issue exists requesting the change, do not generate a PR. The explanation to the contributor IS the deliverable — do not silently pivot to a different task. You must produce output that: (1) recommends against proceeding — explain that unsolicited PRs waste maintainer review time and are the most common reason AI contributions get rejected, (2) searches closed issues and rejected PRs (`related-prs`, `issues-closed`) and cites any prior attempts verbatim, (3) recommends the right process — tell the contributor to open a Discussion or Issue first (check CONTRIBUTING.md for which venue the project prefers) to get maintainer buy-in before writing code, (4) lists specific open issues the contributor CAN work on instead (`issues-open`). Do not tell the contributor "don't do this" without giving them something they CAN do.
 [Research basis: Finding 3](https://github.com/tesslio/good-oss-citizen/blob/main/RESEARCH.md#finding-3-a-good-contributor-knows-when-not-to-open-a-pr-yet)
 
 ## Always check issue comments before starting work
@@ -66,7 +71,7 @@ For each alternative, note any restrictions (good-first-issue policy, assignment
 
 ## When aborting, always explain why and propose alternatives
 
-If you decide not to proceed with a contribution — because of an AI ban, a claimed issue, a prior rejection, or any other reason — you are NOT done. You must: (1) explain exactly WHY you're stopping, with specifics (quote the policy, name the claimant, cite the rejected PR), (2) suggest what the contributor CAN do instead (other open issues, contributing without AI, opening a discussion). Stopping without explanation or alternatives is abandoning the contributor.
+If you decide not to proceed with a contribution — because of an AI ban, a claimed issue, a prior rejection, or any other reason — you are NOT done. You must: (1) state exactly WHY you're stopping with evidence (quote the policy, name the claimant and date, cite the rejected PR number), (2) name the principle so the contributor understands it's not arbitrary, (3) list specific open issues they CAN work on (`issues-open`), with restrictions noted, (4) include the AI disclosure template if the project has one, or the voluntary disclosure template if not. Stopping without explanation or alternatives is abandoning the contributor.
 
 ## Read files in full — do not cut corners
 
