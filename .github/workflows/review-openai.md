@@ -38,6 +38,14 @@ timeout-minutes: 15
 network:
   allowed:
     - defaults
+    # Local workaround for jbaruch/coding-policy#21 — the upstream template's
+    # allow-list is missing GitHub + ChatGPT domains, which breaks `tessl install`
+    # (fetches tile from GitHub) and Codex telemetry. Remove these lines once
+    # that issue ships a fix upstream.
+    - github
+    - threat-detection
+    - ab.chatgpt.com
+    - chatgpt.com
 
 pre-steps:
   - name: Install Tessl CLI
