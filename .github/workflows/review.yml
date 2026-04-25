@@ -16,7 +16,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: tesslio/skill-review@main
         with:
-          path: tiles/good-oss-citizen
-          fail-threshold: 85
+          fetch-depth: 0
+
+      - name: Setup Tessl CLI
+        uses: tesslio/setup-tessl@v2
+        with:
+          # Explicit version pin — `version: latest` resolves via
+          # `https://install.tessl.io/scripts/latest.sh` which returns
+          # empty content from some GitHub Actions runners (reproduced
+          # twice). Pin until upstream setup-tessl exposes a more
+          # reliable resolution mechanism or the install endpoint stops
+          # serving empty bodies.
+          version: "0.77.0"
+          token: ${{ secrets.TESSL_TOKEN }}
+
+      - name: Review changed SKILL.md files
+        run: |
+          set -euo pipefail
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          CHANGED=$(git diff --name-only --diff-filter=ACMR "$BASE_SHA..$HEAD_SHA" \
+                    | grep -E '/SKILL\.md$' || true)
+          if [ -z "$CHANGED" ]; then
+            echo "No SKILL.md files changed — nothing to review."
+            exit 0
+          fi
+          FAIL=0
+          for f in $CHANGED; do
+            echo "::group::Reviewing $f"
+            tessl skill review "$f" --threshold 85 || FAIL=$?
+            echo "::endgroup::"
+          done
+          exit $FAIL
