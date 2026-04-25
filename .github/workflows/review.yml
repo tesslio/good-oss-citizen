@@ -2,24 +2,21 @@ name: Review Skills
 
 permissions:
   contents: read
+  pull-requests: write
 
 on:
   pull_request:
     branches:
       - main
+    paths:
+      - 'tiles/**/SKILL.md'
 
 jobs:
   review:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        skill:
-          - tiles/good-oss-citizen/skills/recon/SKILL.md
-          - tiles/good-oss-citizen/skills/propose/SKILL.md
-          - tiles/good-oss-citizen/skills/preflight/SKILL.md
     steps:
-      - uses: tesslio/action@main
+      - uses: actions/checkout@v4
+      - uses: tesslio/skill-review@main
         with:
-          token: ${{ secrets.TESSL_TOKEN }}
-          command: "skill review"
-          args: "${{ matrix.skill }}"
+          path: tiles/good-oss-citizen
+          fail-threshold: 85
