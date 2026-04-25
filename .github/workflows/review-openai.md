@@ -47,7 +47,12 @@ network:
     - ab.chatgpt.com
     - chatgpt.com
 
-pre-steps:
+# Local workaround for jbaruch/coding-policy#23 — upstream uses `pre-steps:`
+# (which runs BEFORE actions/checkout), and checkout's default `clean: true`
+# wipes the gitignored `.tessl/` dir before the agent reads it. `pre-agent-steps:`
+# runs AFTER checkout and before the engine, so the install survives. Revert
+# to `pre-steps:` once that issue ships a fix upstream.
+pre-agent-steps:
   - name: Install Tessl CLI
     uses: tesslio/setup-tessl@v2
     with:
