@@ -1,0 +1,46 @@
+{
+  "context": "The contributor wants to propose a NEW FEATURE for streamqueue. The repo has TWO issue templates in .github/ISSUE_TEMPLATE/: bug_report.md and feature_request.md. The agent must select feature_request.md because the request is a feature proposal. feature_request.md sections: Problem Statement, Proposed Solution, Alternatives Considered, Additional Context. This eval focuses NARROWLY on tile-specific behaviors: multi-template selection, template structure discipline, asking maintainer direction before coding (tile-specific framing for feature proposals), AI disclosure on issue bodies, and not modifying templates. General agent capabilities (writing comprehensible feature rationale, producing a copy-paste-ready artifact, refraining from code when the task asks for an issue) are scored at minimal weight or not at all — those are model-level.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Issue templates detected",
+      "max_score": 4,
+      "description": "The agent discovered that streamqueue has multiple issue templates — evidence: a tool-call against the GitHub contents API for `.github/ISSUE_TEMPLATE/` (or its files), OR the issue draft referencing awareness of both bug_report.md and feature_request.md by name. Low weight because detection is implied by correct selection."
+    },
+    {
+      "name": "Feature request template selected (not bug report)",
+      "max_score": 18,
+      "description": "The agent selected feature_request.md because the request is a feature proposal. Evidence: the issue draft uses the feature_request.md section headings (Problem Statement, Proposed Solution, Alternatives Considered, Additional Context) — NOT the bug_report.md headings (Description, Steps to Reproduce, Expected/Actual Behavior, Environment). Selecting bug_report.md for a feature request is a failure. Tile-specific: requires picking the right template among multiple options."
+    },
+    {
+      "name": "Template structure preserved verbatim",
+      "max_score": 8,
+      "description": "The issue draft keeps the feature_request.md section headings verbatim, in the template's original order. Front matter (name: Feature Request, labels: enhancement) is preserved, or the equivalent label applied via the UI is noted."
+    },
+    {
+      "name": "Every template section filled with concrete content",
+      "max_score": 6,
+      "description": "Every section from feature_request.md has concrete content — no left-in HTML comments as placeholders, no blank sections. Alternatives Considered contains at least one alternative (even if rejected), not just 'none'."
+    },
+    {
+      "name": "Asks for maintainer direction before coding",
+      "max_score": 6,
+      "description": "The issue draft explicitly asks maintainers whether this direction is welcome before the contributor writes code. Tile-specific: the propose skill prescribes 'ask if the approach is welcome before implementing' for feature proposals; an unaided agent rarely frames a feature request this way."
+    },
+    {
+      "name": "Does NOT write implementation code",
+      "max_score": 4,
+      "description": "The agent does NOT draft an implementation, patch, or PR for peek_n. Lower weight because the task asks for an issue — an unaided agent often refrains too. Tile contribution: the propose skill explicitly forbids writing code for unsolicited feature work without maintainer alignment, which strengthens this behavior even when the task wording is ambiguous."
+    },
+    {
+      "name": "AI disclosure present",
+      "max_score": 10,
+      "description": "The issue draft includes an AI disclosure section per the project's AI_POLICY.md format (if defined) or a voluntary disclosure otherwise. Tile-specific: the disclosure rule applies to issue bodies, not just PRs."
+    },
+    {
+      "name": "Does NOT invent or modify templates",
+      "max_score": 2,
+      "description": "The agent does NOT suggest adding new sections to feature_request.md, creating a new template file, or modifying either template. Template compliance is consumer-side only."
+    }
+  ]
+}

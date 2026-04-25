@@ -2,6 +2,7 @@
 .claude/
 .agents/
 .codex/
+.gemini/
 .vscode/
 .tessl/
 .mcp.json

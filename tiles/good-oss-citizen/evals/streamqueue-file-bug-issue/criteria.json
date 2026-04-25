@@ -1,0 +1,26 @@
+{
+  "context": "The contributor wants to file a new bug report on streamqueue. The repo has an issue template at .github/ISSUE_TEMPLATE/bug_report.md with headings Description, Steps to Reproduce, Expected Behavior, Actual Behavior, Environment, plus front matter (name: Bug Report, labels: bug). This eval focuses NARROWLY on tile-specific behaviors: template-discipline (preserve structure, fill all sections, don't invent templates) and AI disclosure on issue bodies. General agent capabilities (describing the bug accurately, not writing code when asked for an issue, producing a copy-paste-ready artifact) are not scored — those are model-level behaviors, not tile contributions.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Bug-report template structure used verbatim",
+      "max_score": 18,
+      "description": "The issue draft uses .github/ISSUE_TEMPLATE/bug_report.md as its skeleton. All five template section headings (Description, Steps to Reproduce, Expected Behavior, Actual Behavior, Environment) appear verbatim and in the template's original order, with no sections stripped, renamed, merged, or reordered. Front matter (name: Bug Report, labels: bug) is preserved or the equivalent label applied via the UI is noted. Writing a freeform issue body OR rearranging/renaming sections is a failure."
+    },
+    {
+      "name": "Every template section filled with concrete content",
+      "max_score": 6,
+      "description": "Every section from the template contains real content — no left-in HTML comment placeholders (<!-- ... -->) as the section body, no blank sections. The Steps to Reproduce section has concrete numbered steps, not empty list items."
+    },
+    {
+      "name": "AI disclosure present in issue body",
+      "max_score": 12,
+      "description": "The issue draft includes an AI disclosure section or prose note appropriate to streamqueue's AI policy. If AI_POLICY.md defines a format, it matches. Otherwise voluntary disclosure (tool name, what was AI-assisted, who reviewed). Tile-specific: the disclosure rule applies to issues, not just PRs."
+    },
+    {
+      "name": "Does NOT invent or propose a new template",
+      "max_score": 2,
+      "description": "The agent does NOT suggest adding new sections to the template, creating a template file, or modifying bug_report.md itself. Template compliance is consumer-side only."
+    }
+  ]
+}

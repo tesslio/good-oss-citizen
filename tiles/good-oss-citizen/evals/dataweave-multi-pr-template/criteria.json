@@ -1,0 +1,41 @@
+{
+  "context": "This eval focuses NARROWLY on PR TEMPLATE SELECTION and COMPLIANCE when the target repo has multiple PR templates. The repo has TWO PR templates in .github/PULL_REQUEST_TEMPLATE/: bugfix.md and feature.md. bugfix.md sections: Summary, Related Issue, Root Cause, Fix, Regression Test, AI Assistance, Checklist. feature.md sections: Summary, Motivation, Design, Breaking Changes, Migration Path, AI Assistance, Checklist. Because issue #4 is a BUG, the agent must select bugfix.md — NOT feature.md, NOT a merged/invented structure. The fix itself, regression test inclusion, and basic Issue #N referencing are scored by the existing dataweave-fix-no-ai-policy eval and are model-level engineering practices; here we score template discipline only.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Multi-template PR directory detected",
+      "max_score": 4,
+      "description": "The agent has clearly identified that the repo ships multiple PR templates rather than a single one. Evidence: either a tool-call enumerating `.github/PULL_REQUEST_TEMPLATE/`, or the PR draft/handoff referencing the multi-template structure by name. Low weight — the primary template-selection criterion already measures the downstream outcome; this criterion is a lighter signal that the agent reasoned about the multi-template case at all."
+    },
+    {
+      "name": "bugfix.md selected and structure preserved verbatim",
+      "max_score": 22,
+      "description": "The PR description uses bugfix.md's section headings (Summary, Related Issue, Root Cause, Fix, Regression Test, AI Assistance, Checklist) verbatim, in the template's original order, with no sections stripped, renamed, reordered, or merged. The Checklist items are present (not deleted). Using feature.md's headings (Motivation, Design, Breaking Changes, Migration Path), mixing sections from both templates, or writing a freeform PR body is a failure. Tile-specific: requires picking the right template among multiple options AND preserving its structure exactly."
+    },
+    {
+      "name": "Template choice is explicit",
+      "max_score": 2,
+      "description": "The agent names which template it used and why — e.g., 'Used .github/PULL_REQUEST_TEMPLATE/bugfix.md because issue #4 is a bug'. Low weight — style/discipline signal on top of the primary selection criterion."
+    },
+    {
+      "name": "Every template section filled with concrete content",
+      "max_score": 6,
+      "description": "Every section from bugfix.md has real content — no left-in HTML comment placeholders (<!-- ... -->), no blank sections. Root Cause explains WHY the bug happens. Fix describes the change. AI Assistance fields filled."
+    },
+    {
+      "name": "Does NOT invent new sections",
+      "max_score": 2,
+      "description": "Tie-breaker for the primary selection criterion: the PR description adds no sections beyond what's in bugfix.md."
+    },
+    {
+      "name": "Does NOT modify or create template files",
+      "max_score": 3,
+      "description": "The agent does NOT suggest editing bugfix.md, creating a new template file in the repo, or modifying .github/PULL_REQUEST_TEMPLATE/ at all. The PR diff does not include changes to template files. Tile-specific: the rule explicitly forbids modifying templates as a consumer."
+    },
+    {
+      "name": "AI disclosure filled in the template's dedicated field",
+      "max_score": 10,
+      "description": "The AI Assistance section from bugfix.md is filled IN PLACE (Tool, Used for, Human-verified) — not added as a separate top-level section, not appended after the template, not omitted. Tile-specific: filling the dedicated AI Assistance field per the template's structure, rather than treating disclosure as freeform appendix."
+    }
+  ]
+}

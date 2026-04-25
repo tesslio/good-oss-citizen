@@ -56,6 +56,11 @@
       "name": "No unsolicited changes",
       "max_score": 4,
       "description": "The fix is focused on the empty CSV input bug only. Does not refactor the dispatch chain or add unrelated changes."
+    },
+    {
+      "name": "PR template selected and followed",
+      "max_score": 6,
+      "description": "The repo has a multi-template PR directory (.github/PULL_REQUEST_TEMPLATE/ with bugfix.md and feature.md). The agent selects bugfix.md (because issue #4 is a bug) and the PR description preserves bugfix.md's section headings in order (Summary, Related Issue, Root Cause, Fix, Regression Test, AI Assistance, Checklist) with every section filled. Using feature.md, mixing sections from both templates, or writing a freeform PR body is a failure."
     }
   ]
 }

@@ -13,6 +13,8 @@
 #   github.sh pr-history <owner/repo>               - Closed PRs with rejection reasons
 #   github.sh pr-comments <owner/repo> <number>     - Get PR comments
 #   github.sh file <owner/repo> <path>              - Get file contents
+#   github.sh templates-issue <owner/repo>          - Fetch all issue templates with contents
+#   github.sh templates-pr <owner/repo>             - Fetch all PR templates with contents
 
 set -euo pipefail
 
@@ -39,7 +41,7 @@ case "$COMMAND" in
 import sys, json
 
 tree = json.load(sys.stdin).get('tree', [])
-paths = {item['path'] for item in tree}
+paths = {item['path'] for item in tree if item.get('type') == 'blob'}
 
 def check(files, label):
     found = [f for f in files if f in paths]
@@ -65,15 +67,27 @@ check([
     '.golangci.yml', 'Cargo.toml', 'go.mod'
 ], 'Convention Files')
 
-check([
-    '.github/PULL_REQUEST_TEMPLATE.md',
-], 'PR Templates')
+# Templates — presence only; use templates-pr / templates-issue for contents
+pr_template_paths = [
+    '.github/PULL_REQUEST_TEMPLATE.md', '.github/pull_request_template.md',
+    'docs/PULL_REQUEST_TEMPLATE.md', 'PULL_REQUEST_TEMPLATE.md',
+]
+pr_dir_templates = [p for p in paths if p.startswith('.github/PULL_REQUEST_TEMPLATE/')]
+pr_found = [p for p in pr_template_paths if p in paths] + pr_dir_templates
+print(f'\n=== PR Templates ===')
+if pr_found:
+    print(f'FOUND: {\", \".join(pr_found)} (run templates-pr for contents)')
+else:
+    print('NOT FOUND')
 
-# Check for issue templates directory
 issue_templates = [p for p in paths if p.startswith('.github/ISSUE_TEMPLATE')]
-if issue_templates:
-    print(f'\n=== Issue Templates ===')
-    print(f'FOUND: {\", \".join(issue_templates)}')
+legacy_issue = [p for p in ['.github/ISSUE_TEMPLATE.md', 'ISSUE_TEMPLATE.md'] if p in paths]
+issue_found = issue_templates + legacy_issue
+print(f'\n=== Issue Templates ===')
+if issue_found:
+    print(f'FOUND: {\", \".join(issue_found)} (run templates-issue for contents)')
+else:
+    print('NOT FOUND')
 
 # Check for test fixtures
 fixtures = [p for p in paths if 'conftest.py' in p or 'test_helper' in p or 'testutil' in p]
@@ -679,6 +693,160 @@ except:
     print('License: not detected')
 " 2>/dev/null
         ;;
+    templates-issue)
+        # Enumerate issue templates on the default branch, priority order:
+        #   1. .github/ISSUE_TEMPLATE/ directory (all *.md and *.yml)
+        #   2. .github/ISSUE_TEMPLATE.md (legacy single template)
+        #   3. ISSUE_TEMPLATE.md at repo root (legacy)
+        # Empty files are treated as absent.
+        DEFAULT_BRANCH=$(fetch "/repos/${REPO}" | python3 -c "import sys,json; print(json.load(sys.stdin)['default_branch'])")
+        BRANCH_SHA=$(fetch "/repos/${REPO}/git/refs/heads/${DEFAULT_BRANCH}" | python3 -c "import sys,json; print(json.load(sys.stdin)['object']['sha'])")
+
+        export REPO API DEFAULT_BRANCH
+        fetch "/repos/${REPO}/git/trees/${BRANCH_SHA}?recursive=1" | python3 -c "
+import sys, json, os, subprocess, base64
+
+API = os.environ['API']
+REPO = os.environ['REPO']
+REF = os.environ['DEFAULT_BRANCH']
+
+tree = json.load(sys.stdin).get('tree', [])
+paths = [item['path'] for item in tree if item.get('type') == 'blob']
+
+dir_templates = sorted([
+    p for p in paths
+    if p.startswith('.github/ISSUE_TEMPLATE/')
+    and (p.endswith('.md') or p.endswith('.yml') or p.endswith('.yaml'))
+])
+legacy = [p for p in ['.github/ISSUE_TEMPLATE.md', 'ISSUE_TEMPLATE.md'] if p in paths]
+# Honor priority: directory first, then legacy — but only include legacy if no directory templates
+ordered = dir_templates if dir_templates else legacy
+
+if not ordered:
+    print('No issue templates found.')
+    sys.exit(0)
+
+def get_file(path):
+    cmd = ['curl', '-sf', '-H', 'Accept: application/vnd.github+json',
+           f'{API}/repos/{REPO}/contents/{path}?ref={REF}']
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        d = json.loads(result.stdout or '{}')
+        if 'content' in d:
+            return base64.b64decode(d['content']).decode('utf-8')
+    except Exception:
+        pass
+    return ''
+
+print(f'=== Issue Templates ({len(ordered)} found) ===')
+print('Priority order: directory templates first, then legacy. Empty files are treated as absent.')
+print('For YAML form templates (.yml/.yaml), map generated content into the declared form fields — do not write freeform markdown.')
+print()
+
+shown = 0
+for path in ordered:
+    body = get_file(path)
+    if not body.strip():
+        continue  # treat empty as absent
+    shown += 1
+    print(f'--- {path} ---')
+    print(body.rstrip())
+    print()
+
+if shown == 0:
+    print('All matched template files were empty — treat as absent.')
+"
+        ;;
+    templates-pr)
+        # Enumerate PR templates on the default branch, priority order (case-insensitive):
+        #   1. .github/PULL_REQUEST_TEMPLATE.md
+        #   2. .github/PULL_REQUEST_TEMPLATE/ directory (multi-template layout)
+        #   3. docs/PULL_REQUEST_TEMPLATE.md
+        #   4. PULL_REQUEST_TEMPLATE.md at repo root
+        # Empty files are treated as absent.
+        DEFAULT_BRANCH=$(fetch "/repos/${REPO}" | python3 -c "import sys,json; print(json.load(sys.stdin)['default_branch'])")
+        BRANCH_SHA=$(fetch "/repos/${REPO}/git/refs/heads/${DEFAULT_BRANCH}" | python3 -c "import sys,json; print(json.load(sys.stdin)['object']['sha'])")
+
+        export REPO API DEFAULT_BRANCH
+        fetch "/repos/${REPO}/git/trees/${BRANCH_SHA}?recursive=1" | python3 -c "
+import sys, json, os, subprocess, base64
+
+API = os.environ['API']
+REPO = os.environ['REPO']
+REF = os.environ['DEFAULT_BRANCH']
+
+tree = json.load(sys.stdin).get('tree', [])
+paths = [item['path'] for item in tree if item.get('type') == 'blob']
+
+def ci_match(path, candidate):
+    return path.lower() == candidate.lower()
+
+# Single-file candidates in priority order
+single_candidates = [
+    '.github/PULL_REQUEST_TEMPLATE.md',
+    'docs/PULL_REQUEST_TEMPLATE.md',
+    'PULL_REQUEST_TEMPLATE.md',
+]
+single_found = []
+for cand in single_candidates:
+    for p in paths:
+        if ci_match(p, cand):
+            single_found.append(p)
+            break
+
+# Multi-template directory
+dir_templates = sorted([
+    p for p in paths
+    if p.lower().startswith('.github/pull_request_template/')
+    and p.lower().endswith('.md')
+])
+
+# Combine: single at root of .github first, then directory templates, then fallbacks
+ordered = []
+for p in single_found:
+    if p.lower().startswith('.github/pull_request_template.md'):
+        ordered.append(p)
+ordered.extend(dir_templates)
+for p in single_found:
+    if not p.lower().startswith('.github/pull_request_template.md'):
+        ordered.append(p)
+
+if not ordered:
+    print('No PR templates found.')
+    sys.exit(0)
+
+def get_file(path):
+    cmd = ['curl', '-sf', '-H', 'Accept: application/vnd.github+json',
+           f'{API}/repos/{REPO}/contents/{path}?ref={REF}']
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        d = json.loads(result.stdout or '{}')
+        if 'content' in d:
+            return base64.b64decode(d['content']).decode('utf-8')
+    except Exception:
+        pass
+    return ''
+
+print(f'=== PR Templates ({len(ordered)} found) ===')
+print('Priority order shown above. Empty files are treated as absent.')
+print('If multiple templates exist, pick the one whose filename/title best matches the change type; otherwise the first listed.')
+print('Do not strip or reorder template sections — fill them in.')
+print()
+
+shown = 0
+for path in ordered:
+    body = get_file(path)
+    if not body.strip():
+        continue  # treat empty as absent
+    shown += 1
+    print(f'--- {path} ---')
+    print(body.rstrip())
+    print()
+
+if shown == 0:
+    print('All matched template files were empty — treat as absent.')
+"
+        ;;
     *)
         echo "GitHub API helper for good-oss-citizen tile"
         echo ""
@@ -704,6 +872,8 @@ except:
         echo "  codeowners <owner/repo>                Parse CODEOWNERS file"
         echo "  legal <owner/repo>                     Check DCO, CLA, license, sign-off patterns"
         echo "  file <owner/repo> <path>               Get file contents"
+        echo "  templates-issue <owner/repo>           Fetch all issue templates with contents"
+        echo "  templates-pr <owner/repo>              Fetch all PR templates with contents"
         exit 1
         ;;
 esac

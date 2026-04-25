@@ -1,0 +1,31 @@
+{
+  "context": "The contributor wants to file a bug report for taskrunner. The repo has a YAML FORM issue template at .github/ISSUE_TEMPLATE/bug.yaml. The template declares these form fields (by id): version (input), what-happened (textarea), expected (textarea), repro (textarea), logs (textarea with render: shell). Labels: [bug]. This eval focuses NARROWLY on tile-specific behaviors: fetching the YAML form, mapping output to declared form fields by id/label (instead of generic markdown headings), AI disclosure on issue bodies, and not inventing headings outside the form. General agent capabilities (describing the bug accurately, writing concrete repro steps, copying the version from the task, refraining from code when asked for an issue) are not scored — those are model-level.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Fetched the YAML form from the repo (process signal)",
+      "max_score": 8,
+      "description": "The agent's tool-call transcript shows a fetch from the GitHub contents API (or equivalent — gh CLI, curl, REST endpoint, raw.githubusercontent.com URL) for `.github/ISSUE_TEMPLATE/bug.yaml` on good-oss-citizen/demo-taskrunner. Process signal — distinguishes 'agent discovered the form' from 'agent guessed plausible bug-report headings that happen to look similar'. An agent that produces sensible-looking output without ever fetching the form file does not satisfy this criterion."
+    },
+    {
+      "name": "Output maps to declared YAML form fields by id/label, not freeform markdown",
+      "max_score": 18,
+      "description": "The issue draft is organized as a structured field-by-field answer that the contributor can paste into each declared YAML form field (id: version, what-happened, expected, repro, logs; labels: 'taskrunner version', 'What happened?', 'What did you expect to happen?', 'Steps to reproduce', 'Relevant logs or output'). Acceptable formats: explicit field-id labels (e.g. **version:** v1.2.3 / **what-happened:** ...), or the YAML field's `label:` text used verbatim as headings. FAILURE modes: writing ## Description / ## Steps to Reproduce / ## Environment markdown headings that don't match the YAML form's id/label vocabulary; writing a single freeform paragraph; copy-pasting the bug_report.md markdown structure (which is from a different repo) instead of mapping to taskrunner's YAML form. Tile-specific: the propose skill explicitly prescribes mapping to declared YAML form fields by id/label."
+    },
+    {
+      "name": "All required fields are answered",
+      "max_score": 4,
+      "description": "Every field marked `validations: required: true` in the template is answered: version, what-happened, expected, repro. Optional logs field may be left empty or filled. Lower weight because partly tile-driven (template discipline), partly general."
+    },
+    {
+      "name": "Does NOT invent headings or sections not in the form",
+      "max_score": 2,
+      "description": "Tie-breaker for the primary mapping criterion: the agent does NOT add its own section headings (## Environment, ## Additional Context, etc.) that are not declared in the YAML form. Adding a supplementary AI disclosure note at the end is acceptable — disclosure is a separate policy concern."
+    },
+    {
+      "name": "AI disclosure present",
+      "max_score": 10,
+      "description": "The agent includes an AI disclosure appropriate to taskrunner's policy, even though the YAML form doesn't have a dedicated disclosure field. The contributor may add it as a comment or as the last line of the issue body — the point is disclosure is present. Tile-specific: the disclosure rule applies to issue bodies even when the form lacks a slot for it."
+    }
+  ]
+}

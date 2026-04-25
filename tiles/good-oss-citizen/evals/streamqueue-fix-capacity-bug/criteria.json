@@ -48,9 +48,9 @@
       "description": "The agent tells the contributor they must use 'git commit -s' to add Signed-off-by, OR flags that DCO sign-off is required and the agent cannot do it for them. The ACTION matters — not just knowing DCO exists. Does NOT forge the sign-off itself."
     },
     {
-      "name": "PR template followed",
+      "name": "PR template fetched and followed",
       "max_score": 6,
-      "description": "The PR description follows the project's template structure (Summary, Related Issue, Type of Change, AI Assistance, Testing). Reasonable deviations are fine if the key information is present."
+      "description": "The PR description preserves every section from the project's PR template (Summary, Related Issue, Type of Change, AI Assistance, Testing, Checklist) in the template's original order, with no sections stripped, renamed, or reordered. Every section is filled with real content — no '[REPLACE ME]' or left-blank placeholders. Evidence: section headings in the PR description match the template verbatim."
     },
     {
       "name": "Changelog entry included",
