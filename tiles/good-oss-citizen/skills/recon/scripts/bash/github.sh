@@ -731,12 +731,37 @@ def get_file(path):
            f'{API}/repos/{REPO}/contents/{path}?ref={REF}']
     try:
         result = subprocess.run(cmd, capture_output=True, text=True)
-        d = json.loads(result.stdout or '{}')
-        if 'content' in d:
-            return base64.b64decode(d['content']).decode('utf-8')
-    except Exception:
-        pass
-    return ''
+    except OSError as e:
+        sys.stderr.write(f'github.sh: failed to invoke curl for {path}: {e}\n')
+        sys.exit(1)
+    if result.returncode != 0:
+        sys.stderr.write(
+            f'github.sh: curl failed for {path} (rc={result.returncode}); '
+            f'stderr: {result.stderr.strip()}\n'
+        )
+        sys.exit(1)
+    body = result.stdout or ''
+    if not body.strip():
+        sys.stderr.write(f'github.sh: empty response for {path}\n')
+        sys.exit(1)
+    try:
+        d = json.loads(body)
+    except json.JSONDecodeError as e:
+        sys.stderr.write(
+            f'github.sh: non-JSON response for {path}: {e}; '
+            f'first 120 bytes: {body[:120]!r}\n'
+        )
+        sys.exit(1)
+    if 'content' not in d:
+        # GitHub returns 200 without a content field for some non-blob
+        # entries (e.g. directory listings). Caller interprets the empty
+        # string as absent, which is the right semantic here.
+        return ''
+    try:
+        return base64.b64decode(d['content']).decode('utf-8')
+    except (ValueError, UnicodeDecodeError) as e:
+        sys.stderr.write(f'github.sh: failed to decode {path}: {e}\n')
+        sys.exit(1)
 
 print(f'=== Issue Templates ({len(ordered)} found) ===')
 print('Priority order: directory templates first, then legacy. Empty files are treated as absent.')
@@ -820,12 +845,37 @@ def get_file(path):
            f'{API}/repos/{REPO}/contents/{path}?ref={REF}']
     try:
         result = subprocess.run(cmd, capture_output=True, text=True)
-        d = json.loads(result.stdout or '{}')
-        if 'content' in d:
-            return base64.b64decode(d['content']).decode('utf-8')
-    except Exception:
-        pass
-    return ''
+    except OSError as e:
+        sys.stderr.write(f'github.sh: failed to invoke curl for {path}: {e}\n')
+        sys.exit(1)
+    if result.returncode != 0:
+        sys.stderr.write(
+            f'github.sh: curl failed for {path} (rc={result.returncode}); '
+            f'stderr: {result.stderr.strip()}\n'
+        )
+        sys.exit(1)
+    body = result.stdout or ''
+    if not body.strip():
+        sys.stderr.write(f'github.sh: empty response for {path}\n')
+        sys.exit(1)
+    try:
+        d = json.loads(body)
+    except json.JSONDecodeError as e:
+        sys.stderr.write(
+            f'github.sh: non-JSON response for {path}: {e}; '
+            f'first 120 bytes: {body[:120]!r}\n'
+        )
+        sys.exit(1)
+    if 'content' not in d:
+        # GitHub returns 200 without a content field for some non-blob
+        # entries (e.g. directory listings). Caller interprets the empty
+        # string as absent, which is the right semantic here.
+        return ''
+    try:
+        return base64.b64decode(d['content']).decode('utf-8')
+    except (ValueError, UnicodeDecodeError) as e:
+        sys.stderr.write(f'github.sh: failed to decode {path}: {e}\n')
+        sys.exit(1)
 
 print(f'=== PR Templates ({len(ordered)} found) ===')
 print('Priority order shown above. Empty files are treated as absent.')
