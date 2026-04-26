@@ -79,6 +79,8 @@ def assert_envelope(cmd_name: str, body: str) -> dict:
         raise AssertionError(f"{cmd_name}: 'command' must be string, got {type(env['command']).__name__}")
     if not isinstance(env["ok"], bool):
         raise AssertionError(f"{cmd_name}: 'ok' must be bool, got {type(env['ok']).__name__}")
+    if env["data"] is not None and not isinstance(env["data"], dict):
+        raise AssertionError(f"{cmd_name}: 'data' must be dict or null, got {type(env['data']).__name__}")
     if not isinstance(env["warnings"], list):
         raise AssertionError(f"{cmd_name}: 'warnings' must be list")
     if not isinstance(env["errors"], list):
@@ -86,28 +88,63 @@ def assert_envelope(cmd_name: str, body: str) -> dict:
     return env
 
 
+def discover_fixtures(repo: str) -> tuple[str, str, str]:
+    """Pick an issue number, a PR number, and a file path that exist on the
+    target repo's default branch. Falls back to 1/1/README.md if discovery
+    fails. Avoids brittleness from hard-coded numbers if upstream history
+    changes (deletion, force-push, repo transfer)."""
+    import urllib.request
+
+    def gh_get(path: str):
+        try:
+            req = urllib.request.Request(
+                f"https://api.github.com{path}",
+                headers={"Accept": "application/vnd.github+json"},
+            )
+            token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+            if token:
+                req.add_header("Authorization", f"Bearer {token}")
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                return json.load(resp)
+        except (urllib.error.URLError, json.JSONDecodeError, TimeoutError):
+            return None
+
+    issues = gh_get(f"/repos/{repo}/issues?state=all&per_page=20") or []
+    issue_num = next((str(i["number"]) for i in issues if "pull_request" not in i), "1")
+
+    prs = gh_get(f"/repos/{repo}/pulls?state=all&per_page=10") or []
+    pr_num = str(prs[0]["number"]) if prs else "1"
+
+    return issue_num, pr_num, "README.md"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", default="tesslio/good-oss-citizen",
                         help="OWNER/REPO to exercise commands against")
-    parser.add_argument("--issue-number", default="13",
-                        help="Issue number that exists on --repo")
-    parser.add_argument("--pr-number", default="12",
-                        help="PR number that exists on --repo")
-    parser.add_argument("--file-path", default="README.md",
-                        help="A file path that exists on --repo's default branch")
+    parser.add_argument("--issue-number", default=None,
+                        help="Issue number that exists on --repo (auto-discovered if omitted)")
+    parser.add_argument("--pr-number", default=None,
+                        help="PR number that exists on --repo (auto-discovered if omitted)")
+    parser.add_argument("--file-path", default=None,
+                        help="A file path that exists on --repo's default branch (defaults to README.md)")
     args = parser.parse_args()
 
     if not GITHUB_SH.is_file():
         print(f"FAIL: github.sh not found at {GITHUB_SH}", file=sys.stderr)
         return 2
 
+    auto_issue, auto_pr, auto_file = discover_fixtures(args.repo)
     placeholders = {
         "repo": args.repo,
-        "issue_number": args.issue_number,
-        "pr_number": args.pr_number,
-        "file_path": args.file_path,
+        "issue_number": args.issue_number or auto_issue,
+        "pr_number": args.pr_number or auto_pr,
+        "file_path": args.file_path or auto_file,
     }
+    print(f"Fixtures: repo={placeholders['repo']} "
+          f"issue={placeholders['issue_number']} "
+          f"pr={placeholders['pr_number']} "
+          f"file={placeholders['file_path']}")
 
     failed: list[str] = []
     for cmd_name, arg_template, expected_ok in COMMANDS:

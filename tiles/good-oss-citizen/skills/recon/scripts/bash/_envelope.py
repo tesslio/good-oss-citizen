@@ -48,6 +48,18 @@ def fetch(endpoint):
 
     Tries `gh api` first (so authenticated calls work in CI), then falls
     back to curl for unauthenticated public access.
+
+    All failure modes — 404, 403/rate-limit, auth, network, timeout —
+    collapse to "" by design. Many commands here treat "absent file" as
+    a normal outcome (e.g. an OSS repo without `AI_POLICY.md`), so a
+    naive raise-on-error wrapper would misreport that case as a tile
+    bug. The tradeoff is that hard failures look the same as a clean
+    404 to the caller.
+
+    Mitigation in callers: when the absence of an optional resource
+    would meaningfully change the recon report (e.g. PR rejection
+    comments hiding a fetch failure), the calling command should attach
+    a `warnings[]` entry rather than silently emit a partial answer.
     """
     attempts = (
         ["gh", "api", endpoint],

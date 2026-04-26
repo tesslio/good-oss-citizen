@@ -21,7 +21,12 @@ Confirm the task involves contributing to an external open source project (GitHu
 ```bash
 bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh repo-scan OWNER/REPO
 ```
-Read `data.policy_files`, `data.agent_instructions`, `data.conventions`, `data.build_meta`, `data.pr_templates`, `data.issue_templates`, `data.test_fixtures`, `data.ci_workflows`. Each category exposes `found` / `missing` arrays — note both. Proceed to Step 2.
+Read each category from `data`. Two shapes apply:
+
+- **Enumerated checklists** — `data.policy_files`, `data.agent_instructions`, `data.conventions`, `data.build_meta` — each expose `{found, missing}` against a fixed expected list. Note both.
+- **Pattern-discovered** — `data.pr_templates`, `data.issue_templates`, `data.test_fixtures`, `data.ci_workflows` — each expose `{found}` only. There is no enumerated set of "expected" templates or workflow paths to be missing from, so `missing` would be meaningless. Treat an empty `found` as "absent".
+
+Proceed to Step 2.
 
 ## Step 2: Can I contribute? (hard stops)
 

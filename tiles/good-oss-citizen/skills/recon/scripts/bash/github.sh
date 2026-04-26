@@ -239,6 +239,7 @@ if prs is None:
     fail("pr-history", f"could not fetch closed PRs for {REPO}")
 
 out = []
+warnings = []
 for p in prs:
     merged = bool(p.get("merged_at"))
     entry = {
@@ -246,10 +247,17 @@ for p in prs:
         "title": p.get("title", ""),
         "merged": merged,
         "comments": [],
+        "comments_fetch_failed": False,
     }
     if not merged:
         comments = fetch_json(f"/repos/{REPO}/issues/{p['number']}/comments")
-        if comments:
+        if comments is None:
+            entry["comments_fetch_failed"] = True
+            warnings.append(
+                f"could not fetch comments for PR #{p['number']} — "
+                "this may hide rejection feedback"
+            )
+        else:
             entry["comments"] = [
                 {
                     "user": c.get("user", {}).get("login", ""),
@@ -259,7 +267,7 @@ for p in prs:
             ]
     out.append(entry)
 
-emit("pr-history", {"prs": out})
+emit("pr-history", {"prs": out}, warnings=warnings)
 PYEOF
         ;;
 
@@ -275,6 +283,7 @@ if prs is None:
     fail("related-prs", f"could not fetch closed PRs for {REPO}")
 
 found = []
+warnings = []
 for p in prs:
     title = p.get("title") or ""
     body = p.get("body") or ""
@@ -286,10 +295,17 @@ for p in prs:
             "title": p.get("title", ""),
             "merged": bool(p.get("merged_at")),
             "comments": [],
+            "comments_fetch_failed": False,
         }
         if not entry["merged"]:
             comments = fetch_json(f"/repos/{REPO}/issues/{p['number']}/comments")
-            if comments:
+            if comments is None:
+                entry["comments_fetch_failed"] = True
+                warnings.append(
+                    f"could not fetch comments for PR #{p['number']} — "
+                    "this may hide rejection feedback"
+                )
+            else:
                 entry["comments"] = [
                     {
                         "user": c.get("user", {}).get("login", ""),
@@ -299,7 +315,7 @@ for p in prs:
                 ]
         found.append(entry)
 
-emit("related-prs", {"issue_number": ISSUE_NUM, "prs": found})
+emit("related-prs", {"issue_number": ISSUE_NUM, "prs": found}, warnings=warnings)
 PYEOF
         ;;
 
