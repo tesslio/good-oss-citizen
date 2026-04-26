@@ -831,14 +831,23 @@ for path in ordered:
         continue  # treat empty file as absent — matches GitHub's own behavior
     templates.append({"path": path, "content": body.rstrip()})
 
-warnings = []
-# Distinguish "no templates" from "discovered but couldn't fetch": if every
-# discovered path failed to decode, the consumer needs to know it isn't a
-# clean "absent template" answer.
+# error-handling: don't let a fetch failure masquerade as "no templates".
+# If discovery returned paths but every fetch failed, that's an upstream
+# read failure, not absence — fail loudly so the consumer can't conclude
+# "this repo has no issue templates".
 if ordered and not templates and fetch_failures:
+    fail("templates-issue",
+         f"discovered {len(ordered)} template path(s) but could not fetch/decode any: "
+         f"{', '.join(fetch_failures)}")
+
+# Partial failure: some paths fetched, some didn't — keep the successes
+# but warn about the missing ones so the consumer can spot incomplete
+# data.
+warnings = []
+if fetch_failures and templates:
     warnings.append(
-        f"discovered {len(ordered)} template path(s) but could not fetch/decode any: "
-        f"{', '.join(fetch_failures)}"
+        f"could not fetch/decode {len(fetch_failures)} of {len(ordered)} "
+        f"template path(s): {', '.join(fetch_failures)}"
     )
 
 emit("templates-issue", {"default_branch": ref, "templates": templates}, warnings=warnings)
@@ -917,11 +926,18 @@ for path in ordered:
         continue  # treat empty file as absent — matches GitHub's own behavior
     templates.append({"path": path, "content": body.rstrip()})
 
-warnings = []
+# Same semantics as templates-issue: discovered-but-unfetchable is an
+# upstream read failure, not absence.
 if ordered and not templates and fetch_failures:
+    fail("templates-pr",
+         f"discovered {len(ordered)} template path(s) but could not fetch/decode any: "
+         f"{', '.join(fetch_failures)}")
+
+warnings = []
+if fetch_failures and templates:
     warnings.append(
-        f"discovered {len(ordered)} template path(s) but could not fetch/decode any: "
-        f"{', '.join(fetch_failures)}"
+        f"could not fetch/decode {len(fetch_failures)} of {len(ordered)} "
+        f"template path(s): {', '.join(fetch_failures)}"
     )
 
 emit("templates-pr", {"default_branch": ref, "templates": templates}, warnings=warnings)
