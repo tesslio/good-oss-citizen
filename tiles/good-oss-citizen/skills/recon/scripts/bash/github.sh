@@ -731,9 +731,10 @@ warnings = []
 
 # A 404 on the DCO endpoint legitimately means "no DCO file"; a
 # network/auth failure also returns None. fetch_json can't distinguish
-# the two, so dco_known is best-effort: False here means "we got nothing
-# back at all", which encompasses both cases. Documenting the limitation
-# rather than asserting false certainty.
+# the two, so dco_file is best-effort: False here means "we got nothing
+# back at all", which encompasses both the absent-file and fetch-failed
+# cases. There's no `dco_file_known` flag because there's no operation
+# we could do to disambiguate without false certainty.
 dco_resp = fetch_json(f"/repos/{REPO}/contents/DCO?ref={ref}")
 dco_present = bool(dco_resp and "content" in dco_resp)
 
