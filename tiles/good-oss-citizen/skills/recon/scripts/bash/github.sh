@@ -81,7 +81,11 @@ pr_template_singles = [
 pr_dir = sorted(p for p in paths if p.startswith(".github/PULL_REQUEST_TEMPLATE/"))
 pr_templates_found = [p for p in pr_template_singles if p in paths] + pr_dir
 
-issue_dir = sorted(p for p in paths if p.startswith(".github/ISSUE_TEMPLATE"))
+# `.github/ISSUE_TEMPLATE/` is the directory layout (multi-template);
+# `.github/ISSUE_TEMPLATE.md` is the single-file legacy form. Match the
+# directory with a trailing slash so the legacy single file isn't
+# double-counted.
+issue_dir = sorted(p for p in paths if p.startswith(".github/ISSUE_TEMPLATE/"))
 issue_legacy = [p for p in (".github/ISSUE_TEMPLATE.md", "ISSUE_TEMPLATE.md") if p in paths]
 issue_templates_found = issue_dir + issue_legacy
 
@@ -723,10 +727,15 @@ if not ref_data or "object" not in ref_data:
     fail("legal", f"could not resolve branch {ref}")
 sha = ref_data["object"]["sha"]
 
+warnings = []
+
+# A 404 on the DCO endpoint legitimately means "no DCO file"; a
+# network/auth failure also returns None. fetch_json can't distinguish
+# the two, so dco_known is best-effort: False here means "we got nothing
+# back at all", which encompasses both cases. Documenting the limitation
+# rather than asserting false certainty.
 dco_resp = fetch_json(f"/repos/{REPO}/contents/DCO?ref={ref}")
 dco_present = bool(dco_resp and "content" in dco_resp)
-
-warnings = []
 
 # Distinguish None (fetch failure) from empty results so consumers can
 # trust an absent ci_workflows / signed_off_total reading.
@@ -761,11 +770,17 @@ signed = sum(
 )
 
 license_data = fetch_json(f"/repos/{REPO}/license")
-lic = (license_data or {}).get("license") or {}
-license_info = (
-    {"spdx_id": lic.get("spdx_id"), "name": lic.get("name")}
-    if lic else None
-)
+if license_data is None:
+    license_info = None
+    license_known = False
+    warnings.append("could not fetch /license — `license` is incomplete")
+else:
+    lic = license_data.get("license") or {}
+    license_info = (
+        {"spdx_id": lic.get("spdx_id"), "name": lic.get("name")}
+        if lic else None
+    )
+    license_known = True
 
 emit("legal", {
     "default_branch": ref,
@@ -776,6 +791,7 @@ emit("legal", {
     "signed_off_total": len(commits),
     "signed_off_known": commits_known,
     "license": license_info,
+    "license_known": license_known,
 }, warnings=warnings)
 PYEOF
         ;;
@@ -797,7 +813,12 @@ if not ref_data or "object" not in ref_data:
     fail("templates-issue", f"could not resolve branch {ref}")
 sha = ref_data["object"]["sha"]
 
-tree = fetch_json(f"/repos/{REPO}/git/trees/{sha}?recursive=1") or {}
+# Tree fetch failure must NOT silently look like "no templates" — that
+# would let a transient API failure masquerade as a clean absent answer.
+tree = fetch_json(f"/repos/{REPO}/git/trees/{sha}?recursive=1")
+if tree is None:
+    fail("templates-issue",
+         f"could not fetch repository tree for {sha} — cannot enumerate templates")
 paths = [
     item["path"] for item in tree.get("tree", [])
     if item.get("type") == "blob"
@@ -871,7 +892,10 @@ if not ref_data or "object" not in ref_data:
     fail("templates-pr", f"could not resolve branch {ref}")
 sha = ref_data["object"]["sha"]
 
-tree = fetch_json(f"/repos/{REPO}/git/trees/{sha}?recursive=1") or {}
+tree = fetch_json(f"/repos/{REPO}/git/trees/{sha}?recursive=1")
+if tree is None:
+    fail("templates-pr",
+         f"could not fetch repository tree for {sha} — cannot enumerate templates")
 paths = [
     item["path"] for item in tree.get("tree", [])
     if item.get("type") == "blob"

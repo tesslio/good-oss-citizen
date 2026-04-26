@@ -75,6 +75,13 @@ def assert_envelope(cmd_name: str, body: str) -> dict:
     except json.JSONDecodeError as e:
         raise AssertionError(f"{cmd_name}: stdout is not JSON: {e}\n--- body ---\n{body[:400]}")
 
+    # Top-level type check first — calling .keys() on a JSON list/scalar
+    # would raise AttributeError instead of a clear assertion message.
+    if not isinstance(env, dict):
+        raise AssertionError(
+            f"{cmd_name}: top-level JSON must be an object, got {type(env).__name__}: {body[:200]}"
+        )
+
     expected_keys = {"command", "ok", "data", "warnings", "errors"}
     missing = expected_keys - env.keys()
     if missing:

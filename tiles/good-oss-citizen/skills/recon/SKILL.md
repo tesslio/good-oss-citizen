@@ -98,7 +98,7 @@ After running all of the above, synthesize across the responses:
 - If DCO/sign-off is required (any phrasing): note in the recon report that the contributor must use `git commit -s` to add Signed-off-by, and that the agent cannot sign for them — this is a legal attestation that only the contributor can make.
 - If changelog updates are required (any phrasing): note in the recon report that the contribution must include a CHANGELOG.md entry.
 - If tests are required (any phrasing): note in the recon report that the contribution must include regression tests.
-- If `conventions-config.data.editorconfig.found` or `data.pre_commit_config.found` is `true`: note in the recon report that the contribution must follow the configured settings exactly (indent_size, line_length, hooks).
+- If `conventions-config.data.editorconfig.found` or `conventions-config.data.pre_commit_config.found` is `true`: note in the recon report that the contribution must follow the configured settings exactly (indent_size, line_length, hooks).
 - Record the exact commit and branch formats from `commit-conventions.data` (`format`, `signed_off_required`, `examples`) and `branch-conventions.data` (`dominant`, `issue_numbers_in_branch`, `examples`) in the recon report so downstream skills (preflight) apply them when the contribution is created. The recon report should specify them precisely; recon does not create commits or branches itself.
 - If CONTRIBUTING.md mentions running linters (e.g., `make lint`, `npm run lint`), add this to the action items the recon report enumerates for the contributor and downstream skills. Both tests AND linters must pass before submission.
 
