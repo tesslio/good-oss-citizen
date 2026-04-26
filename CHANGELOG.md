@@ -4,6 +4,8 @@ All notable changes to the `good-oss-citizen` tile are recorded here. The format
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-04-26
+
 ### Changed — github.sh emits JSON envelopes (closes #13)
 
 - All 22 `github.sh` commands now print a single JSON envelope on stdout: `{command, ok, data, warnings, errors}`. Replaces the prior prose output (`=== Section ===` headers, instructional sentences) per `rules/script-delegation.md` "JSON-producing: output structured data, not prose".

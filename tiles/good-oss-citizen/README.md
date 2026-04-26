@@ -25,7 +25,7 @@ The tile has three layers:
 
 - **Rules** (always-on, ~2.8k tokens) — the commandments. Never forge a DCO sign-off, never submit without human review, respect AI bans, never write code for a claimed issue. These fire regardless of which skill activated.
 - **Skills** (on-demand, ~5.3k tokens) — the scripture. Detailed workflow guidance for recon (scan the repo before writing code), propose (pick the right venue), and preflight (pre-submission checklist).
-- **Scripts** (19 commands) — the rituals. Deterministic steps that fetch structured data from the GitHub API: policy files, issue comments, commit conventions, prior rejected PRs, CODEOWNERS, legal requirements. Scripts fetch, the model interprets.
+- **Scripts** (22 commands) — the rituals. Deterministic steps that fetch structured data from the GitHub API: policy files, issue comments, commit conventions, prior rejected PRs, CODEOWNERS, legal requirements, issue/PR templates. Each command emits a JSON envelope (`{command, ok, data, warnings, errors}`) so the model parses fields, not prose. Scripts fetch, the model interprets.
 
 ## Research
 
@@ -45,7 +45,7 @@ You don't have to ban AI — you can guide it instead. Add a `tessl.json` to you
   "name": "your-project",
   "dependencies": {
     "tessl-labs/good-oss-citizen": {
-      "version": "1.0.3"
+      "version": "1.1.0"
     }
   }
 }
