@@ -14,12 +14,14 @@ Fixture requirements on the chosen repo:
   - at least one issue (so `issue` / `issue-comments` / `related-prs` resolve)
   - at least one pull request (so `pr-comments` / `prs-closed` / `pr-history`
     return parseable bodies)
-  - a fetchable file on the default branch (auto-discovered via
-    `/repos/{owner}/{repo}/readme`, falls back to `README.md`)
+  - a fetchable file on the default branch
 
-`discover_fixtures()` resolves these at runtime so a deletion or
-force-push upstream cannot turn this test red for unrelated reasons.
-Override any auto-discovered value with the corresponding flag.
+CI is the deterministic test path per `rules/testing-standards.md` and
+must pass explicit `--issue-number` / `--pr-number` / `--file-path`
+flags pointing at fixtures the project owns and won't delete. The
+`discover_fixtures()` fallback exists for manual probing against
+arbitrary repos (where hard-coding wouldn't make sense) and runs only
+when the corresponding flag is omitted.
 """
 
 from __future__ import annotations
