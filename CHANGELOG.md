@@ -8,7 +8,7 @@ All notable changes to the `good-oss-citizen` tile are recorded here. The format
 
 ### Changed — github.sh emits JSON envelopes (closes #13)
 
-- All 22 `github.sh` commands now print a single JSON envelope on stdout: `{command, ok, data, warnings, errors}`. Replaces the prior prose output (`=== Section ===` headers, instructional sentences) per `rules/script-delegation.md` "JSON-producing: output structured data, not prose".
+- All 22 `github.sh` commands now print a single JSON envelope on stdout with the fields `command`, `ok`, `data`, `warnings`, `errors`. Replaces the prior prose output (`=== Section ===` headers, instructional sentences) per `rules/script-delegation.md` "JSON-producing: output structured data, not prose".
 - New shared module `skills/recon/scripts/bash/_envelope.py` provides `emit` / `fail` and a single GitHub fetch client (gh CLI first, curl fallback) so every command's auth, timeout, and error handling stay identical.
 - `recon`, `propose`, `preflight` skills updated to read fields from the envelope's `data` object (e.g., `repo-scan.data.policy_files.found`) instead of parsing prose.
 - `recon/REPORT_TEMPLATE.md` updated: the report summarizes the relevant `data` fields per section rather than pasting raw helper output.
