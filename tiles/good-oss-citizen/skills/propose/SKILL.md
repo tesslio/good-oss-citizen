@@ -98,7 +98,7 @@ bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.s
 bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh templates-pr OWNER/REPO
 ```
 
-If the script reports no templates found, proceed to Step 6 and use the skill's default format. Do not create a template file in a repo that lacks one — this is consumer-side adaptation, not a suggestion to maintainers.
+The helper commands emit JSON envelopes (see `skills/recon/SKILL.md` for the contract). `templates-issue.data.templates` and `templates-pr.data.templates` are arrays of `{path, content}` — empty when no template exists. If the array is empty, proceed to Step 6 and use the skill's default format. Do not create a template file in a repo that lacks one — this is consumer-side adaptation, not a suggestion to maintainers.
 
 ## Step 5: Apply the template rules
 
@@ -118,7 +118,7 @@ Depending on the selected venue:
 ### For an issue:
 - **Write the result to `issue_body.md` in the workspace root.** This file is the deliverable — chat output alone is not sufficient. Do NOT end this session without the file.
 - If a template was selected in Step 5, fill every section — every heading, every required form field. Do not delete or reorder.
-- **Include an AI disclosure section in the issue body — same as for PR descriptions.** This applies even when the issue template doesn't have a dedicated disclosure slot. For markdown templates: add the disclosure at the bottom of the issue body. For YAML form templates: paste the disclosure into the most relevant freeform field (e.g., "additional context" or the last textarea) or append it after the form output. **If `AI_POLICY.md` defines a disclosure format** (Tool / Used for / Human-verified fields, or any structured template), you MUST use that exact structure — copy the template from the `disclosure-format` script output verbatim and fill in the fields. Do NOT substitute a generic prose sentence ("drafted with Claude, reviewed by the contributor") when a structured format is required; the judge compares against the project's declared format. Only if no AI policy exists, use voluntary prose disclosure.
+- **Include an AI disclosure section in the issue body — same as for PR descriptions.** This applies even when the issue template doesn't have a dedicated disclosure slot. For markdown templates: add the disclosure at the bottom of the issue body. For YAML form templates: paste the disclosure into the most relevant freeform field (e.g., "additional context" or the last textarea) or append it after the form output. **If `AI_POLICY.md` defines a disclosure format** (Tool / Used for / Human-verified fields, or any structured template), you MUST use that exact structure — copy the template from `disclosure-format.data.template` verbatim and fill in the fields. Do NOT substitute a generic prose sentence ("drafted with Claude, reviewed by the contributor") when a structured format is required; the judge compares against the project's declared format. Only if no AI policy exists, use voluntary prose disclosure.
 - Reference any prior related issues, PRs, or discussions.
 - Describe the problem clearly. Describe the proposed approach. Ask if the approach is welcome before implementing.
 - Keep it concise — respect maintainer reading time.

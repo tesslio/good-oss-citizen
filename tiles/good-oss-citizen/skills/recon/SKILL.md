@@ -9,6 +9,9 @@ Analyze an open source project to understand its contribution norms before any c
 
 Helper script path: `bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh`
 
+Every helper command prints exactly one JSON envelope on stdout:
+`{"command": "<name>", "ok": <bool>, "data": <object|null>, "warnings": [...], "errors": [...]}`. Read fields from `data`. If `ok` is `false`, treat the command as failed and surface the messages in `errors` to the contributor; do not synthesize the missing payload from prior knowledge. Pay attention to anything in `warnings` (e.g., the `check-claim` deprecation notice).
+
 ## Step 0: Verify this is an OSS contribution
 
 Confirm the task involves contributing to an external open source project (GitHub URL, "submit a PR", "contribute a fix", etc.). If internal or personal project — skip this skill entirely.
@@ -18,14 +21,14 @@ Confirm the task involves contributing to an external open source project (GitHu
 ```bash
 bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh repo-scan OWNER/REPO
 ```
-Parse output. Note every FOUND and NOT FOUND file. Proceed to Step 2.
+Read `data.policy_files`, `data.agent_instructions`, `data.conventions`, `data.build_meta`, `data.pr_templates`, `data.issue_templates`, `data.test_fixtures`, `data.ci_workflows`. Each category exposes `found` / `missing` arrays — note both. Proceed to Step 2.
 
 ## Step 2: Can I contribute? (hard stops)
 
 ```bash
 bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh ai-policy OWNER/REPO
 ```
-The script returns the full text of AI_POLICY.md, CODE_OF_CONDUCT.md, and CONTRIBUTING.md (if they exist). Read them and determine the project's AI stance. Look for explicit negatives alongside "AI": "do not", "cannot", "banned", "prohibited", "not allowed", "not accepted." Check for hard-stop consequences: "PRs will be closed", "contributions rejected", "account suspended." If you find these, that's a ban. Look for disclosure language: "must disclose", "required to disclose", "include what tool." Check for conditional restrictions: "AI not allowed on good-first-issue", "AI only with full human review." Absence of any AI mention means no policy — NOT a ban. Then act:
+The script returns `data.files` — an array with one entry per policy file (`AI_POLICY.md`, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`), each carrying `found` and `content`. Read every entry whose `found` is `true` and determine the project's AI stance. Look for explicit negatives alongside "AI": "do not", "cannot", "banned", "prohibited", "not allowed", "not accepted." Check for hard-stop consequences: "PRs will be closed", "contributions rejected", "account suspended." If you find these, that's a ban. Look for disclosure language: "must disclose", "required to disclose", "include what tool." Check for conditional restrictions: "AI not allowed on good-first-issue", "AI only with full human review." Absence of any AI mention means no policy — NOT a ban. Then act:
 - If AI contributions are **banned** (any phrasing): **STOP all tile skills here. You MUST write `contribution_blocked.md` in the workspace root** — containing the policy text that bans AI, the consequences the policy states (PRs closed, etc.), the suggestion that the contributor can still contribute without AI, and any other guidance the policy itself offers. The file is the deliverable. Do NOT end this session without writing the file.
 - If AI **disclosure is required** (any phrasing): continue, note the requirement.
 - If there are **conditions or restrictions** (e.g., AI banned on good-first-issue labels, AI allowed only with full human review): continue, note them.
@@ -82,17 +85,17 @@ bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.s
 ```bash
 bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh legal OWNER/REPO
 ```
-The contributing-requirements script returns the full CONTRIBUTING.md text. Read it and extract requirements. Look for imperative language: "you must", "required", "must include", "always", "do not." These indicate hard requirements. Softer language ("we recommend", "we appreciate", "consider") indicates preferences, not requirements. Then note action items:
+The contributing-requirements script returns `data.found` and `data.content` — the full CONTRIBUTING.md text when present. Read it and extract requirements. Look for imperative language: "you must", "required", "must include", "always", "do not." These indicate hard requirements. Softer language ("we recommend", "we appreciate", "consider") indicates preferences, not requirements. Then note action items:
 - If DCO/sign-off is required (any phrasing): note in the recon report that the contributor must use `git commit -s` to add Signed-off-by, and that the agent cannot sign for them — this is a legal attestation that only the contributor can make.
 - If changelog updates are required (any phrasing): note in the recon report that the contribution must include a CHANGELOG.md entry.
 - If tests are required (any phrasing): note in the recon report that the contribution must include regression tests.
-- If conventions-config shows .editorconfig or .pre-commit-config settings: note in the recon report that the contribution must follow them exactly (indent_size, line_length, hooks).
-- Record the exact commit and branch formats from commit-conventions and branch-conventions outputs in the recon report so downstream skills (preflight) apply them when the contribution is created. The recon report should specify them precisely; recon does not create commits or branches itself.
+- If `conventions-config.data.editorconfig.found` or `data.pre_commit_config.found` is `true`: note in the recon report that the contribution must follow the configured settings exactly (indent_size, line_length, hooks).
+- Record the exact commit and branch formats from `commit-conventions.data` (`format`, `signed_off_required`, `examples`) and `branch-conventions.data` (`dominant`, `issue_numbers_in_branch`, `examples`) in the recon report so downstream skills (preflight) apply them when the contribution is created. The recon report should specify them precisely; recon does not create commits or branches itself.
 - If CONTRIBUTING.md mentions running linters (e.g., `make lint`, `npm run lint`), add this to the action items the recon report enumerates for the contributor and downstream skills. Both tests AND linters must pass before submission.
 
 ## Step 6: Read files that need human interpretation
 
-Read these FOUND files using the `file` command:
+Read each file the contribution depends on using the `file` command — pass the path verbatim from the relevant `repo-scan` `found` array:
 ```bash
 bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh file OWNER/REPO <path>
 ```
@@ -109,11 +112,11 @@ If the contributor needs alternatives (claimed issue, restricted issue, or rejec
 ```bash
 bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh issues-open OWNER/REPO
 ```
-Present each open issue with its number, title, labels, and assignment status.
+Present each open issue with its number, title, labels, and assignment status (read from `data.issues[]`).
 
 ## Step 8: Produce the recon report
 
-Compile ALL script outputs into a structured report following the template in `skills/recon/REPORT_TEMPLATE.md`. The template enumerates ten sections; paste the raw output of each script under its corresponding heading.
+Compile findings into a structured report following the template in `skills/recon/REPORT_TEMPLATE.md`. The template enumerates ten sections; under each, summarize the relevant fields from each command's `data` payload — never paste the raw envelope JSON. The report's audience is the contributor (and downstream skills), not a machine.
 
 ## Step 9: Hand off to propose (or stop if hard-stop)
 

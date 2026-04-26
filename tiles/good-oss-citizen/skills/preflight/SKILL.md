@@ -43,7 +43,7 @@ Fetch the target repo's PR templates — do not rely on recon notes, and do not 
 bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh templates-pr OWNER/REPO
 ```
 
-If one or more templates are returned:
+The helper command emits a JSON envelope (see `skills/recon/SKILL.md` for the contract). Read `data.templates` — an array of `{path, content}` entries. If it is empty, treat the repo as having no PR template. Otherwise:
 
 - Name which template you used and why (e.g., "Used `<chosen-filename>` — matches the change type of this PR because <reason>"). If multiple exist, pick the one matching change type; if none match, use the first listed.
 - Verify every heading and section from the template is present in the PR description. Do not strip, reorder, or rename sections.

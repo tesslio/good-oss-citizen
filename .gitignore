@@ -1,3 +1,7 @@
+# Python build artifacts
+__pycache__/
+*.py[cod]
+
 # Agent and tool configs
 .claude/
 .agents/

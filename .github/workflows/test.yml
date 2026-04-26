@@ -1,0 +1,33 @@
+name: Smoke tests
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'tiles/good-oss-citizen/skills/recon/scripts/bash/**'
+      - 'tests/**'
+      - '.github/workflows/test.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'tiles/good-oss-citizen/skills/recon/scripts/bash/**'
+      - 'tests/**'
+      - '.github/workflows/test.yml'
+
+jobs:
+  github-sh-envelope:
+    name: github.sh JSON envelope
+    runs-on: ubuntu-latest
+    env:
+      # Authenticated rate limit so the 22-command sweep doesn't trip
+      # the 60-req/hr unauthenticated limit.
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run envelope smoke test
+        run: python3 tests/test_github_sh_envelope.py
