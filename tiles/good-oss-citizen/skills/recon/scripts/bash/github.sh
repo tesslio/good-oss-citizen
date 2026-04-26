@@ -20,6 +20,9 @@ export PYTHONPATH="${SCRIPT_DIR}${PYTHONPATH:+:${PYTHONPATH}}"
 COMMAND="${1:-}"
 REPO="${2:-}"
 ARG="${3:-}"
+# Exported so the python heredocs (and the excepthook in _envelope.py)
+# can label any failure envelope with the right command name.
+export COMMAND
 
 case "$COMMAND" in
     repo-scan)
@@ -723,13 +726,35 @@ sha = ref_data["object"]["sha"]
 dco_resp = fetch_json(f"/repos/{REPO}/contents/DCO?ref={ref}")
 dco_present = bool(dco_resp and "content" in dco_resp)
 
-tree = fetch_json(f"/repos/{REPO}/git/trees/{sha}?recursive=1") or {}
-workflows = sorted(
-    f["path"] for f in tree.get("tree", [])
-    if f["path"].startswith(".github/workflows/")
-)
+warnings = []
 
-commits = fetch_json(f"/repos/{REPO}/commits?per_page=5") or []
+# Distinguish None (fetch failure) from empty results so consumers can
+# trust an absent ci_workflows / signed_off_total reading.
+tree = fetch_json(f"/repos/{REPO}/git/trees/{sha}?recursive=1")
+if tree is None:
+    workflows = []
+    workflows_known = False
+    warnings.append(
+        f"could not fetch repository tree for {sha} — "
+        "ci_workflows is incomplete"
+    )
+else:
+    workflows = sorted(
+        f["path"] for f in tree.get("tree", [])
+        if f["path"].startswith(".github/workflows/")
+    )
+    workflows_known = True
+
+commits = fetch_json(f"/repos/{REPO}/commits?per_page=5")
+if commits is None:
+    commits = []
+    commits_known = False
+    warnings.append(
+        "could not fetch recent commits — "
+        "signed_off_count / signed_off_total is incomplete"
+    )
+else:
+    commits_known = True
 signed = sum(
     1 for c in commits
     if "Signed-off-by:" in (c.get("commit", {}).get("message", "") or "")
@@ -746,10 +771,12 @@ emit("legal", {
     "default_branch": ref,
     "dco_file": dco_present,
     "ci_workflows": workflows,
+    "ci_workflows_known": workflows_known,
     "signed_off_count": signed,
     "signed_off_total": len(commits),
+    "signed_off_known": commits_known,
     "license": license_info,
-})
+}, warnings=warnings)
 PYEOF
         ;;
 
@@ -790,7 +817,6 @@ if not ordered:
 
 templates = []
 fetch_failures = []
-empty_paths = []
 for path in ordered:
     d = fetch_json(f"/repos/{REPO}/contents/{path}?ref={ref}")
     if not d or "content" not in d:
@@ -802,8 +828,7 @@ for path in ordered:
         fetch_failures.append(path)
         continue
     if not body.strip():
-        empty_paths.append(path)  # treat empty as absent
-        continue
+        continue  # treat empty file as absent — matches GitHub's own behavior
     templates.append({"path": path, "content": body.rstrip()})
 
 warnings = []
@@ -878,7 +903,6 @@ if not ordered:
 
 templates = []
 fetch_failures = []
-empty_paths = []
 for path in ordered:
     d = fetch_json(f"/repos/{REPO}/contents/{path}?ref={ref}")
     if not d or "content" not in d:
@@ -890,8 +914,7 @@ for path in ordered:
         fetch_failures.append(path)
         continue
     if not body.strip():
-        empty_paths.append(path)
-        continue
+        continue  # treat empty file as absent — matches GitHub's own behavior
     templates.append({"path": path, "content": body.rstrip()})
 
 warnings = []

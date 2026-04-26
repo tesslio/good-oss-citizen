@@ -19,11 +19,37 @@ identical (auth, timeout, error handling) without per-command drift.
 """
 
 import json
+import os
 import subprocess
 import sys
+import traceback
 
 API = "https://api.github.com"
 TIMEOUT = 15
+
+
+def _install_excepthook():
+    """Make every command emit a valid envelope even on unhandled exceptions.
+
+    Without this hook a `KeyError` on an unexpected GitHub API shape (or
+    any other unhandled exception inside a python heredoc in github.sh)
+    would print a Python traceback to stderr and *no* envelope to stdout
+    — breaking the contract that every invocation prints exactly one
+    envelope. The hook intercepts the dying interpreter, writes a
+    failure envelope, and exits non-zero so consumers can still parse.
+    """
+    def hook(exc_type, exc, tb):
+        if exc_type is SystemExit:
+            sys.__excepthook__(exc_type, exc, tb)
+            return
+        cmd = os.environ.get("COMMAND", "unknown")
+        details = "".join(traceback.format_exception_only(exc_type, exc)).strip()
+        sys.stderr.write(f"github.sh {cmd}: unhandled exception: {details}\n")
+        sys.stderr.write("".join(traceback.format_exception(exc_type, exc, tb)))
+        emit(cmd, None,
+             errors=[f"unhandled exception: {details}"], ok=False)
+        sys.exit(1)
+    sys.excepthook = hook
 
 
 def emit(command, data, *, warnings=None, errors=None, ok=True):
@@ -66,11 +92,17 @@ def fetch(endpoint):
     comments hiding a fetch failure), the calling command should attach
     a `warnings[]` entry rather than silently emit a partial answer.
     """
-    attempts = (
-        ["gh", "api", endpoint],
-        ["curl", "-sf", "-H", "Accept: application/vnd.github+json",
-         f"{API}{endpoint}"],
-    )
+    curl_cmd = ["curl", "-sf", "-H", "Accept: application/vnd.github+json"]
+    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    if token:
+        # Curl gets the same authenticated 5000-req/hr limit as gh when a
+        # token is in the env. Without this, environments without gh fall
+        # back to the 60-req/hr unauthenticated public limit and the
+        # 22-command smoke test would race the limit.
+        curl_cmd += ["-H", f"Authorization: Bearer {token}"]
+    curl_cmd += [f"{API}{endpoint}"]
+
+    attempts = (["gh", "api", endpoint], curl_cmd)
     for cmd in attempts:
         try:
             r = subprocess.run(
@@ -92,3 +124,6 @@ def fetch_json(endpoint):
         return json.loads(body)
     except json.JSONDecodeError:
         return None
+
+
+_install_excepthook()

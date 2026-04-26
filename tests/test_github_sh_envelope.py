@@ -151,17 +151,33 @@ def main() -> int:
         print(f"FAIL: github.sh not found at {GITHUB_SH}", file=sys.stderr)
         return 2
 
-    auto_issue, auto_pr, auto_file = discover_fixtures(args.repo)
-    placeholders = {
-        "repo": args.repo,
-        "issue_number": args.issue_number or auto_issue,
-        "pr_number": args.pr_number or auto_pr,
-        "file_path": args.file_path or auto_file,
-    }
-    print(f"Fixtures: repo={placeholders['repo']} "
-          f"issue={placeholders['issue_number']} "
-          f"pr={placeholders['pr_number']} "
-          f"file={placeholders['file_path']}")
+    # Skip discovery entirely when every fixture flag was supplied — the CI
+    # path passes all three, so CI never touches GitHub for fixture
+    # resolution. discover_fixtures only runs for manual probing where at
+    # least one flag is missing.
+    if args.issue_number and args.pr_number and args.file_path:
+        placeholders = {
+            "repo": args.repo,
+            "issue_number": args.issue_number,
+            "pr_number": args.pr_number,
+            "file_path": args.file_path,
+        }
+        print(f"Fixtures (pinned): repo={placeholders['repo']} "
+              f"issue={placeholders['issue_number']} "
+              f"pr={placeholders['pr_number']} "
+              f"file={placeholders['file_path']}")
+    else:
+        auto_issue, auto_pr, auto_file = discover_fixtures(args.repo)
+        placeholders = {
+            "repo": args.repo,
+            "issue_number": args.issue_number or auto_issue,
+            "pr_number": args.pr_number or auto_pr,
+            "file_path": args.file_path or auto_file,
+        }
+        print(f"Fixtures (auto-discovered): repo={placeholders['repo']} "
+              f"issue={placeholders['issue_number']} "
+              f"pr={placeholders['pr_number']} "
+              f"file={placeholders['file_path']}")
 
     failed: list[str] = []
     for cmd_name, arg_template, expected_ok in COMMANDS:
@@ -198,10 +214,29 @@ def main() -> int:
         warn = " WARN" if env["warnings"] else ""
         print(f"PASS {cmd_name}{warn}")
 
+    # Negative-path: invoking an unknown command must produce a valid
+    # failure envelope (ok=false, errors populated) AND exit non-zero.
+    # The contract covers failure too, so a regression there should fail
+    # CI as loudly as the success-path contract.
+    rc, body = run("definitely-not-a-real-command", ["dummy/repo"])
+    try:
+        env = assert_envelope("definitely-not-a-real-command", body)
+        if env["ok"] is not False:
+            failed.append("unknown-command negative path: ok was not false")
+        elif not env["errors"]:
+            failed.append("unknown-command negative path: errors[] empty")
+        elif rc == 0:
+            failed.append("unknown-command negative path: exit code was 0")
+        else:
+            print("PASS negative-path (unknown command emits ok=false envelope, exit non-zero)")
+    except AssertionError as e:
+        failed.append(f"negative-path: {e}")
+        print(f"FAIL negative-path: {e}", file=sys.stderr)
+
     if failed:
-        print(f"\n{len(failed)} of {len(COMMANDS)} commands failed", file=sys.stderr)
+        print(f"\n{len(failed)} of {len(COMMANDS) + 1} checks failed", file=sys.stderr)
         return 1
-    print(f"\nAll {len(COMMANDS)} commands emitted valid envelopes against {args.repo}")
+    print(f"\nAll {len(COMMANDS)} commands + 1 negative path emitted valid envelopes against {args.repo}")
     return 0
 
 
