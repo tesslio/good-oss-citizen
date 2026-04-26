@@ -102,6 +102,7 @@ def discover_fixtures(repo: str) -> tuple[str, str, str]:
     target repo's default branch. Falls back to 1/1/README.md if discovery
     fails. Avoids brittleness from hard-coded numbers if upstream history
     changes (deletion, force-push, repo transfer)."""
+    import urllib.error
     import urllib.request
 
     def gh_get(path: str):

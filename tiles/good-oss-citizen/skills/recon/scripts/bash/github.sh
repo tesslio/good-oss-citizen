@@ -908,6 +908,7 @@ PYEOF
     *)
         CMD="$COMMAND" python3 <<'PYEOF'
 import os
+import sys
 from _envelope import emit
 
 cmd = os.environ.get("CMD", "")
@@ -920,11 +921,17 @@ available = [
     "codeowners", "legal", "templates-issue", "templates-pr",
 ]
 
+# script-delegation.md self-error-handling: stderr diagnostic on every
+# failure exit, even the dispatcher's unknown-command path.
 if not cmd:
+    sys.stderr.write("github.sh: no command provided. Run with one of: "
+                     + ", ".join(available) + "\n")
     emit("help", {"available_commands": available},
          errors=["no command provided"], ok=False)
 else:
-    emit(cmd or "help", {"available_commands": available},
+    sys.stderr.write(f"github.sh: unknown command: {cmd}. Available: "
+                     + ", ".join(available) + "\n")
+    emit(cmd, {"available_commands": available},
          errors=[f"unknown command: {cmd}"], ok=False)
 PYEOF
         exit 1
