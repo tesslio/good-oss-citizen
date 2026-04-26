@@ -366,9 +366,14 @@ CONVENTIONAL = re.compile(
 messages = []
 conventional = 0
 signed_off = 0
+warnings = []
 for p in merged[:5]:
     commits = fetch_json(f"/repos/{REPO}/pulls/{p['number']}/commits")
-    if not commits:
+    if commits is None:
+        warnings.append(
+            f"could not fetch commits for PR #{p['number']} — "
+            "convention sample may under-report"
+        )
         continue
     for c in commits:
         msg = c.get("commit", {}).get("message", "") or ""
@@ -395,7 +400,7 @@ emit("commit-conventions", {
     "format": fmt,
     "signed_off_required": signed_off > 0,
     "examples": messages[:5],
-})
+}, warnings=warnings)
 PYEOF
         ;;
 
@@ -784,19 +789,34 @@ if not ordered:
     raise SystemExit(0)
 
 templates = []
+fetch_failures = []
+empty_paths = []
 for path in ordered:
     d = fetch_json(f"/repos/{REPO}/contents/{path}?ref={ref}")
     if not d or "content" not in d:
+        fetch_failures.append(path)
         continue
     try:
         body = base64.b64decode(d["content"]).decode("utf-8")
     except (ValueError, UnicodeDecodeError):
+        fetch_failures.append(path)
         continue
     if not body.strip():
-        continue  # treat empty as absent
+        empty_paths.append(path)  # treat empty as absent
+        continue
     templates.append({"path": path, "content": body.rstrip()})
 
-emit("templates-issue", {"default_branch": ref, "templates": templates})
+warnings = []
+# Distinguish "no templates" from "discovered but couldn't fetch": if every
+# discovered path failed to decode, the consumer needs to know it isn't a
+# clean "absent template" answer.
+if ordered and not templates and fetch_failures:
+    warnings.append(
+        f"discovered {len(ordered)} template path(s) but could not fetch/decode any: "
+        f"{', '.join(fetch_failures)}"
+    )
+
+emit("templates-issue", {"default_branch": ref, "templates": templates}, warnings=warnings)
 PYEOF
         ;;
 
@@ -857,19 +877,31 @@ if not ordered:
     raise SystemExit(0)
 
 templates = []
+fetch_failures = []
+empty_paths = []
 for path in ordered:
     d = fetch_json(f"/repos/{REPO}/contents/{path}?ref={ref}")
     if not d or "content" not in d:
+        fetch_failures.append(path)
         continue
     try:
         body = base64.b64decode(d["content"]).decode("utf-8")
     except (ValueError, UnicodeDecodeError):
+        fetch_failures.append(path)
         continue
     if not body.strip():
+        empty_paths.append(path)
         continue
     templates.append({"path": path, "content": body.rstrip()})
 
-emit("templates-pr", {"default_branch": ref, "templates": templates})
+warnings = []
+if ordered and not templates and fetch_failures:
+    warnings.append(
+        f"discovered {len(ordered)} template path(s) but could not fetch/decode any: "
+        f"{', '.join(fetch_failures)}"
+    )
+
+emit("templates-pr", {"default_branch": ref, "templates": templates}, warnings=warnings)
 PYEOF
         ;;
 

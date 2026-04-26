@@ -39,6 +39,11 @@ def emit(command, data, *, warnings=None, errors=None, ok=True):
 
 
 def fail(command, message):
+    # script-delegation.md requires both: non-zero exit AND a stderr
+    # diagnostic. Stdout stays reserved for the JSON envelope so machine
+    # consumers can parse cleanly; stderr carries the human-readable
+    # message for log scrapers and CI.
+    sys.stderr.write(f"github.sh {command}: {message}\n")
     emit(command, None, errors=[message], ok=False)
     sys.exit(1)
 

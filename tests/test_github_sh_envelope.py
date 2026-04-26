@@ -8,9 +8,18 @@ Exercises all 22 commands against a stable public test repo and asserts:
 
 Pass `--repo OWNER/REPO` to override the target. Defaults to
 `tesslio/good-oss-citizen` (this project's upstream — stable enough
-for CI). The chosen repo just needs to exist and respond to public
-read APIs; no specific contents are required because the test grades
-the envelope shape, not the data inside it.
+for CI).
+
+Fixture requirements on the chosen repo:
+  - at least one issue (so `issue` / `issue-comments` / `related-prs` resolve)
+  - at least one pull request (so `pr-comments` / `prs-closed` / `pr-history`
+    return parseable bodies)
+  - a fetchable file on the default branch (auto-discovered via
+    `/repos/{owner}/{repo}/readme`, falls back to `README.md`)
+
+`discover_fixtures()` resolves these at runtime so a deletion or
+force-push upstream cannot turn this test red for unrelated reasons.
+Override any auto-discovered value with the corresponding flag.
 """
 
 from __future__ import annotations
@@ -115,7 +124,12 @@ def discover_fixtures(repo: str) -> tuple[str, str, str]:
     prs = gh_get(f"/repos/{repo}/pulls?state=all&per_page=10") or []
     pr_num = str(prs[0]["number"]) if prs else "1"
 
-    return issue_num, pr_num, "README.md"
+    # Use the GitHub readme endpoint to get the actual readme path on the
+    # default branch (handles repos that name it README, README.rst, etc.).
+    readme = gh_get(f"/repos/{repo}/readme")
+    file_path = readme["path"] if readme and isinstance(readme, dict) and readme.get("path") else "README.md"
+
+    return issue_num, pr_num, file_path
 
 
 def main() -> int:

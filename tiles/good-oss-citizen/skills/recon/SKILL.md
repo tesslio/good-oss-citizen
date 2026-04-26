@@ -90,7 +90,11 @@ bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.s
 ```bash
 bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh legal OWNER/REPO
 ```
-The contributing-requirements script returns `data.found` and `data.content` — the full CONTRIBUTING.md text when present. Read it and extract requirements. Look for imperative language: "you must", "required", "must include", "always", "do not." These indicate hard requirements. Softer language ("we recommend", "we appreciate", "consider") indicates preferences, not requirements. Then note action items:
+
+After running all of the above, synthesize across the responses:
+
+- From `legal.data`: read `dco_file`, `signed_off_count` / `signed_off_total`, `license`, and `ci_workflows` to determine whether DCO is enforced and what license applies.
+- From `contributing-requirements.data` (`found`, `content`): the full CONTRIBUTING.md text when present. Look for imperative language: "you must", "required", "must include", "always", "do not." These indicate hard requirements. Softer language ("we recommend", "we appreciate", "consider") indicates preferences, not requirements. Then note action items:
 - If DCO/sign-off is required (any phrasing): note in the recon report that the contributor must use `git commit -s` to add Signed-off-by, and that the agent cannot sign for them — this is a legal attestation that only the contributor can make.
 - If changelog updates are required (any phrasing): note in the recon report that the contribution must include a CHANGELOG.md entry.
 - If tests are required (any phrasing): note in the recon report that the contribution must include regression tests.
