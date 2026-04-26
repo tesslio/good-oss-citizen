@@ -6,29 +6,23 @@ Exercises all 22 commands against a stable public test repo and asserts:
   - each key has the correct type
   - exit code matches `ok` (0 for ok=true, non-zero for ok=false)
 
-Pass `--repo OWNER/REPO` to override the target. Defaults to
-`tesslio/good-oss-citizen` (this project's upstream — stable enough
-for CI).
-
-Fixture requirements on the chosen repo:
-  - at least one issue (so `issue` / `issue-comments` / `related-prs` resolve)
-  - at least one pull request (so `pr-comments` / `prs-closed` / `pr-history`
-    return parseable bodies)
-  - a fetchable file on the default branch
-
-CI is the deterministic test path per `rules/testing-standards.md` and
-must pass explicit `--issue-number` / `--pr-number` / `--file-path`
-flags pointing at fixtures the project owns and won't delete. The
-`discover_fixtures()` fallback exists for manual probing against
-arbitrary repos (where hard-coding wouldn't make sense) and runs only
-when the corresponding flag is omitted.
+Per `rules/testing-standards.md` ("Tests must be deterministic; provide
+fixed test data"), every fixture is hard-coded:
+  - repo:        tesslio/good-oss-citizen
+  - issue #13:   this migration's tracking issue
+  - PR #12:      the previous merged PR
+  - file path:   README.md
+None of these will be deleted from the upstream. `--repo`,
+`--issue-number`, `--pr-number`, and `--file-path` flags exist for
+running the test against a different fixture set if the upstream ever
+becomes unavailable, but no value is auto-discovered. There is no
+network call before the script is invoked.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -99,85 +93,32 @@ def assert_envelope(cmd_name: str, body: str) -> dict:
     return env
 
 
-def discover_fixtures(repo: str) -> tuple[str, str, str]:
-    """Pick an issue number, a PR number, and a file path that exist on the
-    target repo's default branch. Falls back to 1/1/README.md if discovery
-    fails. Avoids brittleness from hard-coded numbers if upstream history
-    changes (deletion, force-push, repo transfer)."""
-    import urllib.error
-    import urllib.request
-
-    def gh_get(path: str):
-        try:
-            req = urllib.request.Request(
-                f"https://api.github.com{path}",
-                headers={"Accept": "application/vnd.github+json"},
-            )
-            token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
-            if token:
-                req.add_header("Authorization", f"Bearer {token}")
-            with urllib.request.urlopen(req, timeout=15) as resp:
-                return json.load(resp)
-        except (urllib.error.URLError, json.JSONDecodeError, TimeoutError):
-            return None
-
-    issues = gh_get(f"/repos/{repo}/issues?state=all&per_page=20") or []
-    issue_num = next((str(i["number"]) for i in issues if "pull_request" not in i), "1")
-
-    prs = gh_get(f"/repos/{repo}/pulls?state=all&per_page=10") or []
-    pr_num = str(prs[0]["number"]) if prs else "1"
-
-    # Use the GitHub readme endpoint to get the actual readme path on the
-    # default branch (handles repos that name it README, README.rst, etc.).
-    readme = gh_get(f"/repos/{repo}/readme")
-    file_path = readme["path"] if readme and isinstance(readme, dict) and readme.get("path") else "README.md"
-
-    return issue_num, pr_num, file_path
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", default="tesslio/good-oss-citizen",
                         help="OWNER/REPO to exercise commands against")
-    parser.add_argument("--issue-number", default=None,
-                        help="Issue number that exists on --repo (auto-discovered if omitted)")
-    parser.add_argument("--pr-number", default=None,
-                        help="PR number that exists on --repo (auto-discovered if omitted)")
-    parser.add_argument("--file-path", default=None,
-                        help="A file path that exists on --repo's default branch (defaults to README.md)")
+    parser.add_argument("--issue-number", default="13",
+                        help="Issue number that exists on --repo")
+    parser.add_argument("--pr-number", default="12",
+                        help="PR number that exists on --repo")
+    parser.add_argument("--file-path", default="README.md",
+                        help="A file path that exists on --repo's default branch")
     args = parser.parse_args()
 
     if not GITHUB_SH.is_file():
         print(f"FAIL: github.sh not found at {GITHUB_SH}", file=sys.stderr)
         return 2
 
-    # Skip discovery entirely when every fixture flag was supplied — the CI
-    # path passes all three, so CI never touches GitHub for fixture
-    # resolution. discover_fixtures only runs for manual probing where at
-    # least one flag is missing.
-    if args.issue_number and args.pr_number and args.file_path:
-        placeholders = {
-            "repo": args.repo,
-            "issue_number": args.issue_number,
-            "pr_number": args.pr_number,
-            "file_path": args.file_path,
-        }
-        print(f"Fixtures (pinned): repo={placeholders['repo']} "
-              f"issue={placeholders['issue_number']} "
-              f"pr={placeholders['pr_number']} "
-              f"file={placeholders['file_path']}")
-    else:
-        auto_issue, auto_pr, auto_file = discover_fixtures(args.repo)
-        placeholders = {
-            "repo": args.repo,
-            "issue_number": args.issue_number or auto_issue,
-            "pr_number": args.pr_number or auto_pr,
-            "file_path": args.file_path or auto_file,
-        }
-        print(f"Fixtures (auto-discovered): repo={placeholders['repo']} "
-              f"issue={placeholders['issue_number']} "
-              f"pr={placeholders['pr_number']} "
-              f"file={placeholders['file_path']}")
+    placeholders = {
+        "repo": args.repo,
+        "issue_number": args.issue_number,
+        "pr_number": args.pr_number,
+        "file_path": args.file_path,
+    }
+    print(f"Fixtures: repo={placeholders['repo']} "
+          f"issue={placeholders['issue_number']} "
+          f"pr={placeholders['pr_number']} "
+          f"file={placeholders['file_path']}")
 
     failed: list[str] = []
     for cmd_name, arg_template, expected_ok in COMMANDS:
