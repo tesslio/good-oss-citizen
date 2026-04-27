@@ -4,6 +4,10 @@ All notable changes to the `good-oss-citizen` tile are recorded here. The format
 
 ## [Unreleased]
 
+## [1.1.1 — 1.1.8] — 2026-04-26 / 2026-04-27
+
+`tesslio/patch-version-publish@v1` auto-bumps a patch on every merge to `main` but doesn't write per-version CHANGELOG sections. The work below shipped as patches between 1.1.0 and 1.1.8 — collected here as a range rather than guessing which entry landed in which patch. Headline storyline: ship the `triage` skill (1.1.3), rework the eval suite for honest signal (1.1.4–1.1.5), then iterate on the rubric three times to land the "filled field + distant contradiction" routing (1.1.6 → 1.1.7 → 1.1.8).
+
 ### Fixed — Rubric: scope the mandatory consistency scan to fully-filled bodies
 
 Re-eval after #34 (run `019dd006-0f7b-70c1-92e2-4407e9f93f99`) showed the detection-mandatory fix landed dramatically on its target — `synthetic-pr-subtle-breaking-change` jumped from 51% to **100%** with-context, and the contradiction-detection criterion that had collapsed in #32 (89% → 32%) recovered to **100%**. Every criterion on that scenario hit 100%.
