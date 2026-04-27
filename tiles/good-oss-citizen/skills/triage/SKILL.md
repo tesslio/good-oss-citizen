@@ -1,6 +1,6 @@
 ---
 name: triage
-description: Check an already-open issue or pull request's body against the host repository's templates and draft a polite suggested comment for human review (not for posting). Use when the user wants to triage an existing issue or PR, review whether an open issue/PR follows the repo template, draft a comment asking the author for missing information, or evaluate whether a maintainer should ask for revisions. Triggers on phrases like "triage this issue", "review this existing PR", "does this PR follow the template", "draft a comment asking the author for X", "check this open issue against the template", "what's missing from this PR body". IMPORTANT — this is for already-open items the contributor did not author. For drafting a NEW issue/PR body before submission, use the `propose` skill; for pre-submission verification of `pr_description.md`, use the `preflight` skill.
+description: Check an already-open issue or pull request body against the host repo templates and draft a suggested comment for human review, not posting. Use when asked to triage an existing issue/PR, decide whether an existing body is good enough before responding, review whether it follows the repo template, or draft a comment asking for missing information. Triggers include "triage this issue", "review this existing PR", "does this PR follow the template", "check whether the PR body follows the repository's pull request template", "check whether the issue body follows the repository's issue template", "quick check on this open issue", "body is good enough", "asked for anything more before I respond", and "what's missing from this PR body". For NEW issue/PR drafts use `propose`; for own PR pre-submission verification use `preflight`.
 ---
 
 # Triage
@@ -39,7 +39,7 @@ For a pull request:
 bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh templates-pr OWNER/REPO
 ```
 
-Read `data.templates` — an array of `{path, content}`. This skill evaluates detected template files only. If `data.templates` is empty, report that no matching template files were detected for this item and finish (no comment to draft). Also read `data.default_branch` from the same response — Step 5 needs it to construct a stable blob URL. Otherwise proceed immediately to Step 4.
+Read `data.templates` — an array of `{path, content}`. This skill evaluates detected template files only. If `data.templates` is empty, record that no matching template files were detected for this item and that there is no comment to draft. Also state that this is separate from judging whether the body is good or bad; there is no repository template to grade it against. Then proceed directly to Step 6 so the no-template finding is written to `triage_comment.md` and presented to the user. Also read `data.default_branch` from the same response — Step 5 needs it to construct a stable blob URL. Otherwise proceed immediately to Step 4.
 
 ## Step 4 — Apply the rubric
 
@@ -47,7 +47,8 @@ Apply `skills/preflight/body-template-compliance-rubric.md` to the body fetched 
 
 - Pick the template that matches the body's intent (bug / feature / docs / generic) per the rubric's "Template discovery and selection" rules.
 - Apply the body-local evidence rule: credit only information that appears in the same body, not in the title, comments, linked items, or commits.
-- Classify the result into one of the rubric's four buckets: `Matches well enough`, `Slight deviation`, `Significant deviation`, or (for items that don't make the main comment) `Things to check manually`.
+- If the selected PR template has a required AI Assistance / AI disclosure section and the body omits it, treat that as a primary template compliance gap before lower-level stripped checklist details.
+- Classify the result with exactly one main label: `Result: Matches well enough`, `Result: Slight deviation`, or `Result: Significant deviation`. `Things to check manually` is auxiliary; do not use it as the result label.
 
 Proceed immediately to Step 5.
 
@@ -56,8 +57,8 @@ Proceed immediately to Step 5.
 Follow the rubric's "Suggested fix/comment rules" exactly:
 
 - For `Matches well enough`, write `No comment needed`.
-- For `Slight deviation`, ask only for genuinely missing information and concrete template-alignment fixes.
-- For `Significant deviation`, do not list every individual missing detail — ask the author to follow the template and include a direct GitHub blob URL to the template file. Construct the URL as `https://github.com/OWNER/REPO/blob/<default_branch>/<template-path>` using the `default_branch` and the chosen template's `path` returned by Step 3 — never guess `main` / `master`, since the host repo may use neither.
+- For `Slight deviation`, ask only for genuinely missing information, concrete template-alignment fixes, or focused clarification of internally inconsistent required answers. When a filled required answer is contradicted elsewhere in the same body in a way that changes practical impact, scope, risk, reviewer action, or maintainer decision, say the field is present but unreliable, ask which statement is correct, and ask what follow-up information is needed.
+- For `Significant deviation`, do not put the internal `Result: ...` label inside the contributor-facing comment. Do not list every individual missing detail; group related missing prompts such as stripped testing/checklist confirmation items. Ask the author to follow the template and include a direct GitHub blob URL to the template file. Construct the URL as `https://github.com/OWNER/REPO/blob/<default_branch>/<template-path>` using the `default_branch` and the chosen template's `path` returned by Step 3 — never guess `main` / `master`, since the host repo may use neither.
 - Always say `template`, never `form`.
 - Include any "Things to check manually" entries as optional snippets in a separate section, phrased tentatively.
 - Wrap the suggested comment in a four-backtick markdown block so the user can copy it without breaking on inner triple-backticks.
@@ -66,12 +67,23 @@ Proceed immediately to Step 6.
 
 ## Step 6 — Hand off, do not post
 
-Present to the user:
+Before responding, write `triage_comment.md` in the workspace root. This file is the durable handoff for the human reviewer and must include:
 
-1. The classification bucket from Step 4.
+1. The selected template path, or the explicit no-template finding from Step 3.
+2. The classification bucket from Step 4, when a template exists.
+3. The suggested comment from Step 5 (or `No comment needed`).
+4. Any `Things to check manually` items as a separate optional snippet section.
+5. If the user asked you to post, an explicit note that you did not post to GitHub and that the human must review and post the comment themselves if they approve it.
+
+Present the same handoff to the user:
+
+1. The classification bucket from Step 4, or the no-template finding from Step 3.
 2. The suggested comment from Step 5 (or `No comment needed`).
 3. Any `Things to check manually` items as a separate optional snippet section.
+4. If applicable, the explicit no-post note.
 
-**Do NOT post the comment to GitHub.** This skill drafts; the human reviews and posts. If the user asks you to post, decline and remind them that the post is their action — they need to approve the wording and place it in the right thread.
+**Do NOT post the comment to GitHub.** This skill drafts; the human reviews and posts. If the user asks you to post, explicitly say you did not post it and decline to post it. Explain briefly that public comments must be reviewed and placed by the human because the post is their action and their voice.
+
+When the user asked you to post, the final response must include an explicit sentence like: `I did not post this to GitHub; please review the draft and post it yourself if you approve it.` Do not rely on a draft file or implied handoff to communicate the refusal.
 
 Finish here.

@@ -68,19 +68,27 @@ Fix: inline the template + body content into each task's `task.md` directly. The
 
 The pre-rework `synthetic-pr-subtle-breaking-change` task scored 91% with-context partly because the bled bucket vocabulary in the task literally told the agent the answer (so fixture inaccessibility didn't matter). The rework exposed both problems at once — bleeding fix + path bug — and this commit closes the path bug. Bleeding fix stays.
 
+### Fixed — Template contradictions require author clarification
+
+- Updated the synthetic breaking-change contradiction eval and shared body/template rubric so a filled required answer that is contradicted by another body-local statement is treated as an actionable `Slight deviation` clarification, not `Matches well enough` / `No comment needed`. The author should clarify which compatibility statement is correct.
+- Clarified that conditionally removable required sections remain compliance gaps unless the same body clearly satisfies the removal condition.
+
 ### Tests — Eval coverage rework for `triage` (no leaks, no bleeding)
 
 Audited the three template-compliance evals against the `jbaruch/coding-policy: plugin-evals` rule and addressed bleeding + universal-competence padding; added four tile-specific scenarios for behaviors that previously had no eval coverage.
 
 Existing-eval fixes:
 
-- `synthetic-pr-subtle-breaking-change-template-compliance`: task no longer prescribes "matches the template, partially matches, or significantly deviates" or "look at by hand" — those leaked the rubric's bucket vocabulary and the manual-check concept directly into the prompt. Task now reads "I'm finalizing a pull request body before I open it. Tell me what to do before I submit." Reweighted the load-bearing `Matches well enough` + manual-check criterion (12 → 18 pts). Dropped the bled "Uses the local template-compliance fixture files" criterion that just checked the agent read the files the task explicitly listed.
+- `synthetic-pr-subtle-breaking-change-template-compliance`: task no longer prescribes "matches the template, partially matches, or significantly deviates" or "look at by hand" — those leaked the rubric's bucket vocabulary and the manual-check concept directly into the prompt. The task now asks what, if anything, the author should change before review. Reworked the load-bearing criterion so a body-local contradiction in required Compatibility / Migration answers must be reported as `Result: Slight deviation` with focused author clarification, not `Matches well enough` / `No comment needed`. Dropped the bled "Uses the local template-compliance fixture files" criterion that just checked the agent read the files the task explicitly listed.
 - `streamqueue-existing-pr-template-compliance`: dropped two universal-competence criteria ("does not modify repo files", "separates template compliance from code/review merits"). Refocused the comment criterion onto "uses `template` literal AND includes blob URL constructed with `default_branch`" — both tile-prescribed values from the rubric and the triage skill's Step 5. Reweighted AI Assistance gap framing (12 → 16) and stripped-Testing/Checklist summarization (8 → 12).
 
 New evals:
 
 - `triage-no-template-finish-cleanly` (real-fetch against `tesslio/good-oss-citizen` issue #19, on a repo with no issue template): tests that the agent stops when `data.templates` is empty rather than inventing a generic bug-report structure to grade against. Tile-prescribed: triage Step 3's "report no matching template files were detected … finish (no comment to draft)". Baseline reflexively invents Description / Repro / Environment headings. **Eval result: +86 lift, baseline 8% / with-context 94%.**
 - `triage-refuse-to-post-comment` (real-fetch, demo-streamqueue issue #2): the user explicitly asks the agent to post the comment ("post the comment on my behalf so I can move on to the next thing"). Tile-prescribed: refuse the post AND deliver the triage draft. Tests the Step 6 hard rule against helpfulness theater. Baseline tendency is either to post or to refuse without delivering the draft. **Eval result: +34 lift, baseline 54% / with-context 88%.**
+- `synthetic-pr-checkbox-label-drift-template-compliance` (local task with inlined template + body): tests checkbox semantics that were easy to overfit in prompts — visible unchecked options are fine, unchecked-option drift is usually irrelevant, materially changed selected labels are compliance gaps, and suspicious selected combinations belong in manual checks unless the same body clearly supports the main comment.
+- `synthetic-pr-uncertain-scope-manual-check-template-compliance` (local task with inlined template + body): tests the non-actionable side of the internal-consistency rule — the template is filled and usable, but a selected `Feature` checkbox is suspicious enough to put under **Things to check manually** while the main result remains `Matches well enough` / `No comment needed`.
+- `synthetic-pr-external-context-significant-template-compliance` (local task with inlined template + body): tests the linked-body boundary — external issue/review context must not satisfy required PR template fields, while information present elsewhere in the same PR body should prevent over-asking. Tile-prescribed: `Result: Significant deviation`, proportional comment, direct template link, and structured analysis separate from the suggested comment.
 
 Local-file scenarios inline their fixture content directly in `task.md` rather than referencing a `tiles/good-oss-citizen/fixtures/` path that doesn't resolve at eval runtime — see the "Fixed — Eval fixture path resolution" section above for context.
 

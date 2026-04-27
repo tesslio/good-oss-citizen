@@ -1,0 +1,41 @@
+{
+  "context": "Tests the linked-body boundary for template compliance. The task deliberately includes tempting outside context: the linked issue and review thread explain root cause, manual verification, and security impact. The PR body itself is sparse: it includes a related issue link, a short summary of the retry-worker change, and `Testing: npm test`, but it does not follow the template structure and delegates Root cause, Risk/security impact, Human verification, and Checklist status to external context. Tile-prescribed outcome: `Result: Significant deviation` because the PR body largely abandoned the template and external context must not receive template-compliance credit. At the same time, the comment should not ask for information already present in the same PR body, such as what changed, the related issue link, or the fact that `npm test` ran. The suggested comment should ask the author to update the PR body to follow the template, include the direct template link `https://github.com/example/queuekeeper/blob/trunk/.github/PULL_REQUEST_TEMPLATE.md`, use `template` rather than `form`, avoid weak phrasing, and avoid listing every missing field.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Evaluates the PR body itself as the compliance unit",
+      "max_score": 12,
+      "description": "The agent clearly treats the open PR body as the thing being audited. It does not give template-compliance credit for the linked issue, review thread, title, inferred code changes, or other external context. It may mention that outside context exists, but it must not use that context to mark Root cause, Risk/security impact, Human verification, or Checklist as satisfied."
+    },
+    {
+      "name": "Classifies as Significant deviation",
+      "max_score": 14,
+      "description": "The result is `Result: Significant deviation` or clearly equivalent wording. `Slight deviation` is incorrect because several required sections are absent and the PR body largely abandoned the template structure. `Matches well enough` is incorrect even though the outside context makes the change understandable."
+    },
+    {
+      "name": "Distinguishes same-body information from external context",
+      "max_score": 14,
+      "description": "The agent identifies that the same PR body already contains the related issue link, a concise description of what changed, and `Testing: npm test`, so it does not ask for those generically. It separately identifies that root cause, risk/security impact, human verification, and checklist status are genuinely missing from the PR body because they appear only in external context. Tile-specific: external context does not satisfy the template, while same-body information prevents over-asking."
+    },
+    {
+      "name": "Uses proportional significant-deviation comment strategy",
+      "max_score": 12,
+      "description": "The suggested comment asks the author to update the PR body to follow the repository template rather than listing every missing prompt or checkbox. It may group the missing areas, but it does not duplicate the full template in the comment. Tile-specific: significant deviations should point back to the template directly."
+    },
+    {
+      "name": "Includes the direct template link when asking for alignment",
+      "max_score": 10,
+      "description": "The suggested comment includes `https://github.com/example/queuekeeper/blob/trunk/.github/PULL_REQUEST_TEMPLATE.md` or an equivalent direct blob URL using the provided default branch and template path. A comment asking the author to follow or align with the template without this link is incomplete."
+    },
+    {
+      "name": "Uses structured analysis separate from the comment",
+      "max_score": 10,
+      "description": "The output separates analysis from the suggested contributor-facing comment. Strong answers include distinct sections or clearly separated bullets for template compliance gaps, information already present elsewhere in the same body, genuinely missing information, things to check manually if any, and suggested comment. The suggested comment itself remains concise."
+    },
+    {
+      "name": "Contributor-facing wording is direct and uses template",
+      "max_score": 8,
+      "description": "The suggested comment says `template`, not `form`, and uses direct but polite wording such as `Could you please...` or `Can you please...`. It avoids weak phrases like `Would you mind`, `If you want`, or `You may want`, and includes a short reason such as making review easier."
+    }
+  ]
+}

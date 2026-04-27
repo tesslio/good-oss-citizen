@@ -1,11 +1,11 @@
 {
-  "context": "This eval tests the body / template compliance rubric's ability to distinguish 'all required template fields are filled' from 'something elsewhere in the body contradicts a filled field'. The synthetic PR template has a Compatibility / Migration section with explicit Yes/No fields. The draft body fills that section as backward compatible with no migration needed, but Summary much earlier in the same body says replacing `messageBridge.rawCaption` with `messageBridge.safeCaption` is a breaking change for plugins importing the old helper. The tile-prescribed result is `Matches well enough` (the template is filled) plus a `Things to check manually` entry surfacing the distant contradiction for human judgment — NOT a rewrite request and NOT a request for fields that are already present. The task does not prescribe these buckets or the manual-check concept; both are tile-specific values from `skills/preflight/body-template-compliance-rubric.md`.",
+  "context": "This eval tests the body / template compliance rubric's ability to distinguish 'all required template fields are physically present' from 'a filled required answer is made unreliable by another statement in the same body'. The synthetic PR template has a Compatibility / Migration section with explicit Yes/No fields. The draft body fills that section as backward compatible with no migration needed, but Summary much earlier in the same body says replacing `messageBridge.rawCaption` with `messageBridge.safeCaption` is a breaking change for plugins importing the old helper. The tile-prescribed result is `Slight deviation`: do not ask for sections already present and do not demand a full rewrite, but do draft a concise clarification comment asking the author which compatibility statement is correct and whether migration guidance is needed. `Matches well enough` with `No comment needed` is wrong because the inconsistency makes a required answer unreliable.",
   "type": "weighted_checklist",
   "checklist": [
     {
-      "name": "Recognizes the Compatibility / Migration fields are present",
+      "name": "Recognizes the Compatibility / Migration fields are present but unreliable",
       "max_score": 10,
-      "description": "The agent notices the body includes `Backward compatible? (Yes/No) Yes`, `Config/env changes? (Yes/No) No`, `Migration needed? (Yes/No) No`, and upgrade steps. It does not incorrectly report the Compatibility / Migration section as missing."
+      "description": "The agent notices the body includes `Backward compatible? (Yes/No) Yes`, `Config/env changes? (Yes/No) No`, `Migration needed? (Yes/No) No`, and upgrade steps. It does not incorrectly report the Compatibility / Migration section as missing, but it also does not treat those answers as safely complete once another body sentence contradicts them."
     },
     {
       "name": "Finds the distant breaking-change contradiction",
@@ -13,24 +13,24 @@
       "description": "The agent identifies that Summary says replacing `messageBridge.rawCaption` with `messageBridge.safeCaption` is a breaking change for plugins importing the old helper, while Compatibility / Migration says the PR is backward compatible and no migration is needed. It should connect these distant statements even though they use different field wording."
     },
     {
-      "name": "Classifies as Matches well enough with manual check, not a rewrite request",
+      "name": "Classifies as Slight deviation with author clarification, not no-comment match",
       "max_score": 18,
-      "description": "The result bucket is `Matches well enough` (or equivalent wording — 'mostly compliant', 'template is followed', etc.) AND the agent surfaces the contradiction as a manual-check / reviewer-judgment item rather than a template-compliance gap. `Slight deviation` is partial credit only if it clearly avoids asking for a full rewrite. `Significant deviation` is incorrect — the template is filled. Tile-specific: a baseline agent told 'tell me what to do' on a body with a real-looking inconsistency will likely ask the author to rewrite the Compatibility section; the rubric's 'fields are present, surface as manual check' is the tile's value."
+      "description": "The result bucket uses the exact label `Result: Slight deviation` because the template is structurally filled but a required answer set is unreliable due to a body-local contradiction. `Matches well enough` with `No comment needed` is incorrect because the author needs to clarify the compatibility claim. `Significant deviation` is also incorrect because this is one focused clarification, not a broad template rewrite."
     },
     {
-      "name": "Keeps the main suggested comment quiet",
+      "name": "Drafts a concise clarification comment",
       "max_score": 8,
-      "description": "The main suggested comment is `No comment needed` or otherwise does not ask the author to follow/rewrite the template. Any wording about the contradiction is kept as an optional manual-check snippet for the reviewer, phrased tentatively rather than as an accusation. Tile-specific: the rubric prescribes 'No comment needed' as the literal output for `Matches well enough` and 'Optional comment snippets for manual use' as a separate section."
+      "description": "The suggested comment asks the PR author to clarify the conflict between the breaking-change summary and the Compatibility / Migration answers, including whether migration or upgrade guidance is needed. It must not be `No comment needed`, and it must not leave the contradiction only as a private/manual triager note."
     },
     {
       "name": "Does not over-ask for already-present template content",
       "max_score": 8,
-      "description": "The agent does not ask for Summary, Security Impact, Compatibility / Migration, Repro / Verification, User-visible changes, Environment, Human verification, or the Yes/No field, because those fields are already present in the same body. Tile-specific: the rubric's body-local evidence rule + 'Information already present elsewhere in the same body' bucket — baseline often asks for confirmation of present information."
+      "description": "The agent does not ask for Summary, Security Impact, Compatibility / Migration, Repro / Verification, User-visible changes, Environment, Human verification, or the Yes/No field to be added, because those fields are already present in the same body. It asks only for clarification/correction of the inconsistent compatibility claim rather than requesting a full template rewrite."
     },
     {
-      "name": "Explains why this is a manual review signal",
+      "name": "Explains why author clarification is needed",
       "max_score": 6,
-      "description": "The output briefly explains that the body-local template content is present, but the conflicting compatibility claims may need human judgment to decide whether the compatibility answer or summary text should change."
+      "description": "The output briefly explains that the body-local template content is present, but the body gives incompatible answers about breaking compatibility and migration. It makes clear the author should resolve which statement is correct before submission."
     }
   ]
 }

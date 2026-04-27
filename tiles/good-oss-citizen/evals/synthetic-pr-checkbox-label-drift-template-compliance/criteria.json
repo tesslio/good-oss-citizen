@@ -1,0 +1,41 @@
+{
+  "context": "Tests checkbox-specific template-compliance rules on an already-open PR body. The template's Change Type checkbox list uses selected-option labels as scope claims: `Bug fix`, `Feature`, `Refactor required for the fix`, `Docs`, `Security hardening`, `Chore/infra`. The PR body keeps the section and most of the body structure, but selected labels have been materially changed: `Bug fix` became selected `Issue`, and `Refactor required for the fix` became selected `Refactor`. It also has a selected `Feature` whose fit is suspicious because the summary describes a timeout bug fix and says there are no user-facing behavior changes beyond failed jobs returning sooner. An unchecked option changed from `Chore/infra` to `CI`, which should not matter because it is not selected. Tile-prescribed outcome: `Slight deviation` with a concise request to align the selected Change Type labels with the template; do not ask the author to delete visible unchecked options or complain about unchecked-option drift. Put the suspicious selected `Feature` combination in `Things to check manually` or phrase it tentatively unless the agent explicitly ties it to body text. This eval covers observed failures around visible unchecked options, selected-label semantic drift, unchecked-option differences, suspicious checkbox combinations, and direct contributor-facing wording.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Does not treat visible unchecked options as incomplete",
+      "max_score": 10,
+      "description": "The agent does not ask the contributor to delete unchecked options or narrow the visible checkbox list just because unchecked choices remain. It treats visible unchecked options as normal markdown checkbox semantics unless the template says to remove them. Tile-specific: the rubric's checkbox rule says unchecked options may remain visible and checkbox scaffolding is not a problem by itself."
+    },
+    {
+      "name": "Ignores harmless unchecked-option drift",
+      "max_score": 8,
+      "description": "The agent does not complain that unchecked `Chore/infra` became unchecked `CI`, and does not include this in the suggested comment. The unchecked option is not an author-selected scope claim and does not make the selected choices unclear. Tile-specific: the rubric distinguishes selected labels from unchecked-option differences."
+    },
+    {
+      "name": "Flags materially changed selected checkbox labels",
+      "max_score": 18,
+      "description": "The agent identifies that selected `Issue` does not preserve the meaning of template label `Bug fix`, and selected `Refactor` does not preserve the meaning of `Refactor required for the fix`. It explains that these selected-label changes are broader, less precise, or ambiguous. Minor wording differences would be fine, but these selected labels change the author's scope claim. Tile-specific: the rubric's selected-checkbox-label rule."
+    },
+    {
+      "name": "Classifies as Slight deviation, not Significant deviation or match",
+      "max_score": 12,
+      "description": "The result bucket is `Result: Slight deviation` or clearly equivalent wording. `Matches well enough` is incorrect because two selected labels materially changed. `Significant deviation` is incorrect because the PR body otherwise follows the template structure and only needs a focused checkbox-label alignment fix."
+    },
+    {
+      "name": "Separates suspicious selected combination into manual checks",
+      "max_score": 10,
+      "description": "The agent notices that selected `Feature` may be suspicious because the summary describes a timeout bug fix and says there are no user-facing behavior changes beyond failed jobs returning sooner, but it does not automatically accuse the author unless it ties the concern to the body text. Best answer puts this under `Things to check manually` or phrases it as a tentative optional snippet. Tile-specific: suspicious checkbox combinations are useful review signals but should not be overclaimed."
+    },
+    {
+      "name": "Suggested comment is direct, precise, and does not over-ask",
+      "max_score": 12,
+      "description": "The suggested comment asks only for the concrete selected-label alignment fix, such as using the template's `Bug fix` and `Refactor required for the fix` wording if those are the intended selections. It does not ask for Summary, Related issue, or Testing because those are present in the same body. It does not list irrelevant unchecked choices. Tile-specific: proportional drafting plus same-body evidence."
+    },
+    {
+      "name": "Contributor-facing wording says template and avoids weak phrasing",
+      "max_score": 6,
+      "description": "The suggested comment uses `template`, not `form`, and is polite but direct. It avoids weak or disconnected phrasing such as `Would you mind`, `If you want`, or `You may want`."
+    }
+  ]
+}

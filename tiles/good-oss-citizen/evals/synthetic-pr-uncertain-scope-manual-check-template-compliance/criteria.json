@@ -1,0 +1,36 @@
+{
+  "context": "Tests the manual-check side of the internal-consistency rule. The PR body follows the template and fills every required section with usable same-body information. The selected `Feature` checkbox is worth a human look because the summary mainly describes a bug fix and says the editor UI/save flow is unchanged, but the body also mentions an internal diagnostic payload, so the feature selection is suspicious rather than definitively wrong. Tile-prescribed outcome: `Matches well enough` with `No comment needed`, plus a separate `Things to check manually` item or optional snippet for the selected `Feature` scope question. The agent should not ask the contributor to revise the main body because the required template answers are present and usable.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Classifies as Matches well enough with no main comment",
+      "max_score": 18,
+      "description": "The result bucket is `Result: Matches well enough` and the main suggested comment is exactly or effectively `No comment needed`. `Slight deviation` is incorrect because no required template answer is missing, weak, changed, or made unreliable enough to require contributor clarification."
+    },
+    {
+      "name": "Keeps the scope concern in manual checks",
+      "max_score": 16,
+      "description": "The agent notices the selected `Feature` checkbox may be worth checking because the body primarily describes an autosave bug fix and says the editor UI/save flow is unchanged, while also mentioning an internal diagnostic payload. It puts this under `Things to check manually` or an optional manual-use snippet, not in the main contributor-facing comment."
+    },
+    {
+      "name": "Does not overclaim the selected Feature checkbox is wrong",
+      "max_score": 10,
+      "description": "The agent phrases the scope concern tentatively. It does not accuse the author of an incorrect selection, because the internal diagnostic payload could plausibly explain why `Feature` was selected."
+    },
+    {
+      "name": "Credits every required section as present",
+      "max_score": 12,
+      "description": "The agent recognizes that Change Type, Summary, User-visible changes, Testing, and Human verification are all present and usable in the same PR body. It does not ask for any of these sections to be added or rewritten."
+    },
+    {
+      "name": "Does not rely on external context",
+      "max_score": 6,
+      "description": "The analysis stays within the provided PR body and template. It does not invent external issue, diff, or reviewer context to justify a revision request."
+    },
+    {
+      "name": "Uses structured analysis separate from the comment",
+      "max_score": 8,
+      "description": "The output separates template compliance gaps, information already present, genuinely missing information, things to check manually, suggested comment, and optional snippets when applicable. The main comment remains empty/no-comment even if the manual-check section is non-empty."
+    }
+  ]
+}

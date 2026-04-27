@@ -1,6 +1,6 @@
-# Final-verification pass on a draft PR body
+# Look at this open pull request body
 
-I'm finalizing a pull request body before I open it. Tell me what to do before I submit. Don't post anything to GitHub.
+A contributor opened this pull request. The repo's PR template and the open body are below. Take a look at the body before review and tell me what you make of it. Don't post anything to GitHub.
 
 ## The repo's PR template
 
@@ -63,6 +63,16 @@ Describe the problem and fix in 2–5 bullets:
 ## Security Impact (required)
 List security-sensitive behavior changes. If none, write `None`.
 Reduces prompt-injection and token-inflation exposure from binary captions.
+The bridge now normalizes caption metadata before it reaches prompt assembly.
+Binary payloads are represented as opaque attachment records instead of inline text.
+The allowlist for prompt-visible caption fields is enforced in the shared serializer.
+The serializer rejects unknown caption fields instead of forwarding them downstream.
+The bridge keeps the existing message permission checks unchanged.
+No new network access is introduced.
+No new file-system access is introduced.
+No new secret material is stored.
+Existing audit logging continues to record caption-source metadata.
+Existing redaction rules still run before the prompt is constructed.
 
 ## Compatibility / Migration (required)
 - Backward compatible? (Yes/No) Yes

@@ -11,6 +11,9 @@ on:
       - main
     paths:
       - 'tiles/good-oss-citizen/skills/recon/scripts/bash/**'
+      - 'tiles/good-oss-citizen/evals/**'
+      - 'tiles/good-oss-citizen/rules/**'
+      - 'tiles/good-oss-citizen/skills/**'
       - 'tests/**'
       - '.github/workflows/test.yml'
   push:
@@ -18,6 +21,9 @@ on:
       - main
     paths:
       - 'tiles/good-oss-citizen/skills/recon/scripts/bash/**'
+      - 'tiles/good-oss-citizen/evals/**'
+      - 'tiles/good-oss-citizen/rules/**'
+      - 'tiles/good-oss-citizen/skills/**'
       - 'tests/**'
       - '.github/workflows/test.yml'
 
