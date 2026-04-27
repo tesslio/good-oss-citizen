@@ -4,6 +4,26 @@ All notable changes to the `good-oss-citizen` tile are recorded here. The format
 
 ## [Unreleased]
 
+### Changed — Rubric tightens routing for "filled field + distant contradiction"
+
+Re-eval after the fixture-path fix in #30 isolated a real rubric ambiguity in `synthetic-pr-subtle-breaking-change-template-compliance`: with the path bug gone and the fixture content visible to baseline, both baseline and with-context still failed the criterion that requires `Matches well enough` + manual-check for a filled template whose Compatibility/Migration field is contradicted by a different Summary section. Both got 0–8% on "Classifies as Matches well enough with manual check" and 0–19% on "Keeps the main suggested comment quiet". The agent reads the rubric's existing soft language ("can be a compliance gap" / "if suspicious but not certain enough") and reasonably picks "ask the contributor to fix the contradicted field" — which is editorial judgment, not template compliance.
+
+The rubric (`skills/preflight/body-template-compliance-rubric.md`) now spells out a four-route decision in the "Internal consistency and manual checks" section:
+
+1. Filled field + distant contradiction in another section → `Matches well enough`, surface in **Things to check manually** only. Even when the contradiction is sharp, this routes to manual-check, not main-comment.
+2. Filled field whose answer is itself internally self-contradictory ("Yes, except this breaks foo") → `Slight deviation`, ask the author to clarify only that field.
+3. Field empty / placeholder / `Yes/No` echoed as the literal answer → `Slight deviation` or `Significant deviation`, ask only for that field.
+4. Required structure abandoned → `Significant deviation`, ask the author to follow the template.
+
+Cross-references added:
+- `Matches well enough` definition now explicitly includes the "filled field + distant contradiction" case.
+- `Template compliance gaps` bucket now distinguishes self-contradicting answers (gap) from filled-field-with-distant-contradiction (manual-check).
+- `Suggested fix/comment rules` clarifies that `No comment needed` applies even when **Things to check manually** is non-empty — manual-check items go in optional snippets, not the main comment.
+
+### Tests — Retire `triage-yaml-form-mismapped-fields` (universal competence post-fix)
+
+After the fixture-content inlining in #30, the YAML form scenario re-scored baseline 95% / with-context 100% / **+5 lift**. Per-criterion: every criterion except one ("Says `template`, never `form`", baseline 58% / with-context 100%) was already aced by baseline at 100%. The model handles content-equivalence on YAML forms natively. Per `jbaruch/coding-policy: plugin-evals` — "Coincidence with universal competence … Retire or accept as documentation." Retired. The vocabulary check (template vs form) is a real tile-prescribed value but not load-bearing enough to anchor a scenario; it's covered as part of the comment criteria in `streamqueue-existing-pr-template-compliance`.
+
 ### Tests — Retire two low-signal evals + fix a fixture-path bug exposed by the rework
 
 3-round eval against the post-#28 tile (run `019dcf79-105c-74bf-ab57-351159004c7a`) revealed that two of the seven template-compliance / triage evals weren't measuring tile value:
