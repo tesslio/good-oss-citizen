@@ -19,7 +19,7 @@ But the broad "Detection is mandatory before deciding the result bucket" framing
 - The "you may not skip the scan because the fields look filled" guard now applies *only when every required section is filled*, not as a blanket rule.
 - Final sanity-check detection guard narrowed accordingly: the "name a part of the body you checked against another part" check only applies to fully-filled `Matches well enough + None` outputs. When required sections are missing, an empty manual-check is appropriate and not a failure.
 
-This keeps the #15 win without the over-application that hurt #12 and #14.
+This keeps the `synthetic-pr-subtle-breaking-change` win (51% → 100% with-context after #34) without the over-application that hurt `streamqueue-existing-pr-template-compliance` and `triage-refuse-to-post-comment`.
 
 ### Fixed — Rubric: detection is mandatory before routing
 

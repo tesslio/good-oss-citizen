@@ -217,7 +217,7 @@ Only include this section when **Things to check manually** is not `None`.
 
 Before finalizing, re-read the checked body and verify:
 
-- if every required section is filled and your output is `Matches well enough` with `Things to check manually: None`, confirm the consistency scan was real — name at least one part of the body you checked against another part. (When required sections are missing, this check does not apply: the gap detection has already done its work and an empty manual-check is appropriate.),
+- if every required section is filled and your output is `Matches well enough` with `Things to check manually: None`, confirm the consistency scan was real by naming at least one part of the body you checked against another part. This check does not apply when required sections are missing: gap detection has already done its work and an empty manual-check is appropriate there.
 - every reported gap maps to a specific template instruction or explicit repo guidance,
 - the suggested comment does not ask for information already present somewhere else in the same body,
 - every requested change is either genuinely missing information or a real template-alignment fix that improves clarity,
