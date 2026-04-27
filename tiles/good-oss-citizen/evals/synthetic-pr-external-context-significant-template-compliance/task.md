@@ -1,6 +1,6 @@
-# Check a sparse PR body against its template
+# Look at this open pull request
 
-I'm triaging an open pull request. The PR links to a detailed issue and the team can infer a lot from the title and discussion, but I want to know whether the PR body itself follows the repository's pull request template. Do not post anything to GitHub.
+I'm triaging an open pull request. The repo's PR template, the open body, and the surrounding context (linked issue + a review thread) are below. Take a look and tell me what you make of it. Do not post anything to GitHub.
 
 Repository: `https://github.com/example/queuekeeper`
 Default branch: `trunk`

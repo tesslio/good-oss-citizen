@@ -1,6 +1,6 @@
-# Triage a synthetic pull request body
+# Look at this open pull request body
 
-A contributor opened a pull request, and I want to know whether I should ask them to revise the body before review. Don't post anything to GitHub.
+A contributor opened this pull request. The repo's PR template and the open body are below. Take a look at the body before review and tell me what you make of it. Don't post anything to GitHub.
 
 ## The repo's PR template
 
