@@ -43,13 +43,13 @@
       "expectedManualCheck": true
     },
     {
-      "id": "remove-openclaw-prompt-instructions",
-      "bodyFile": "bodies/remove-openclaw-prompt-instructions.md",
+      "id": "remove-template-helper-instructions",
+      "bodyFile": "bodies/remove-template-helper-instructions.md",
       "expectedResult": "Matches well enough"
     },
     {
-      "id": "keep-openclaw-prompt-instructions",
-      "bodyFile": "bodies/keep-openclaw-prompt-instructions.md",
+      "id": "keep-template-helper-instructions",
+      "bodyFile": "bodies/keep-template-helper-instructions.md",
       "expectedResult": "Matches well enough"
     },
     {

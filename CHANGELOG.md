@@ -4,13 +4,19 @@ All notable changes to the `good-oss-citizen` tile are recorded here. The format
 
 ## [Unreleased]
 
-### Added — Body / template compliance rubric
+### Added — `triage` skill for already-open issue/PR bodies
 
-- New `skills/preflight/body-template-compliance-rubric.md` defines how to grade an issue or PR body against the host repository's template — body-local evidence rule, content-equivalent answers, checkbox / option-list alignment, YAML form field rules, internal-consistency manual checks, output buckets (`Matches well enough` / `Slight deviation` / `Significant deviation` / `Things to check manually`), and a polite-comment template that says `template`, never `form`.
-- `preflight` Check 3 (PR template compliance) and `propose` Step 5 (Apply the template rules) now reference the rubric for final verification of `pr_description.md` / `issue_body.md` before handoff.
-- New `github.sh body` command fetches an issue or pull request body as a JSON envelope and classifies it as `issue` or `pull_request` (23rd helper command).
-- New eval scenarios: `streamqueue-existing-issue-template-compliance`, `streamqueue-existing-pr-template-compliance`, and `synthetic-pr-subtle-breaking-change-template-compliance`. The synthetic case checks a body whose Compatibility / Migration section says "backward compatible" while a Summary line earlier in the same body describes a concrete breaking API replacement — the expected behavior is `Matches well enough` with a manual-check entry, not a rewrite request.
-- Synthetic PR-template fixtures live under `evals/fixtures/synthetic-pr-template/` so they're scoped to the eval domain rather than checked-in skill content.
+- New `triage` skill is the activation entrypoint for checking an already-open issue or pull request body against the host repository's templates. It reuses the rubric from `skills/preflight/body-template-compliance-rubric.md`, fetches the body via the existing `github.sh body` command, and drafts a suggested comment for the contributor to review and (if they agree) post manually. The skill explicitly does NOT post to GitHub.
+- Connects assets that previously had no clear entrypoint: `body` was used only by drafting flows; the `streamqueue-existing-issue-template-compliance` and `streamqueue-existing-pr-template-compliance` evals exercise the triage workflow but had no skill prompt to activate it. Triggers on phrases like "triage this issue", "review this existing PR", "does this PR follow the template", "draft a comment asking the author for X".
+- Skill boundary: `propose` drafts a *new* body, `preflight` verifies the contributor's *own* body before submission, `triage` reviews someone else's *already-open* body and drafts a suggested comment. The three skills share the rubric in `preflight/`.
+
+### Fixed — Synthetic fixture filenames no longer reference OpenClaw
+
+- `bodies/keep-openclaw-prompt-instructions.md` → `bodies/keep-template-helper-instructions.md`
+- `bodies/remove-openclaw-prompt-instructions.md` → `bodies/remove-template-helper-instructions.md`
+- `expected-results.json` updated to the new ids and paths.
+
+The OpenClaw fixture tree itself was already removed from PR #22's rework; these two synthetic-fixture filenames were the last remaining artefact of that source-of-inspiration name.
 
 ## [1.1.0] — 2026-04-26
 

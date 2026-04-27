@@ -18,6 +18,9 @@
     },
     "preflight": {
       "path": "skills/preflight/SKILL.md"
+    },
+    "triage": {
+      "path": "skills/triage/SKILL.md"
     }
   }
 }
