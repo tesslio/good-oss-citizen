@@ -117,7 +117,9 @@ For YAML issue forms, map fields by `id`, `label`, and `validations.required`.
 
 ## Internal consistency and manual checks
 
-Look for contradictions, unexplained scope shifts, suspicious checkbox selections, or materially inconsistent wording inside the same body. You may compare the title against the body for inconsistency checks, but not for giving template-credit.
+Detection is mandatory. Before deciding the result bucket, scan every filled field of the body and look for contradictions, unexplained scope shifts, suspicious checkbox selections, or materially inconsistent wording inside the same body. **You may not skip the scan because the fields look filled.** A `Matches well enough` outcome with `Things to check manually: None` for a body that contains a detectable contradiction is a failure of the scan, not a successful classification — the routing rules below assume detection happened first.
+
+You may compare the title against the body for inconsistency checks, but not for giving template-credit.
 
 Examples (all are inconsistencies *across* filled fields, not gaps in any single field):
 
@@ -129,11 +131,13 @@ Examples (all are inconsistencies *across* filled fields, not gaps in any single
 
 Compliance gaps in checkbox / option lists (covered by the bucket definition, not this section): no required checkbox checked, a required selection that drifts from the template's label.
 
-### How to route an inconsistency
+### How to route an inconsistency you've found
+
+The routes below describe what to do once an inconsistency is detected. They do NOT describe what to do when you haven't actively scanned. If the scan above was perfunctory, redo it before consulting these routes.
 
 Default routing — apply in order, take the first that fits:
 
-1. **Field is filled with a clear answer + another section contradicts it →** classify the body as `Matches well enough`, surface the contradiction in **Things to check manually** only. The required answer is on the page; the maintainer reads it. Asking the contributor to "fix" the field would be asking them to pick a winner you already saw — that is judgment, not template compliance. Even when the contradiction is sharp and obvious, this is the route to take.
+1. **Field is filled with a clear answer + another section contradicts it →** classify the body as `Matches well enough`, AND surface the contradiction in **Things to check manually** with a quoted excerpt of both the filled field and the conflicting section. Both halves are mandatory — `Matches well enough` without the manual-check entry is the wrong outcome, the same as `Slight deviation` with a rewrite request. The required answer is on the page; the maintainer reads it. Asking the contributor to "fix" the field would be asking them to pick a winner you already saw — that is judgment, not template compliance. Even when the contradiction is sharp and obvious, the routing is `Matches well enough` + manual-check, never `Slight deviation` and never silently dropped.
 2. **Field is filled but the answer itself is internally self-contradictory** (e.g. "Backward compatible: Yes, except this breaks foo") **→** classify as `Slight deviation`, ask the author to clarify only that field. The answer is on the page but unreliable as written.
 3. **Field is empty / placeholder / `Yes/No` echoed as the literal answer →** classify as `Slight deviation` or `Significant deviation` per the rest of the body, ask only for that field. This is a template-compliance gap, not a consistency one.
 4. **The template's required structure is abandoned and consistency cannot be assessed →** `Significant deviation`, ask the author to follow the template.
@@ -207,6 +211,7 @@ Only include this section when **Things to check manually** is not `None`.
 
 Before finalizing, re-read the checked body and verify:
 
+- you actually scanned for inconsistencies — name at least one part of the body you checked against another part. If your output is `Matches well enough` and `Things to check manually: None`, confirm the scan was real, not skipped because the fields looked filled,
 - every reported gap maps to a specific template instruction or explicit repo guidance,
 - the suggested comment does not ask for information already present somewhere else in the same body,
 - every requested change is either genuinely missing information or a real template-alignment fix that improves clarity,

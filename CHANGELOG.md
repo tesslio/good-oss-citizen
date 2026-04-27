@@ -4,6 +4,16 @@ All notable changes to the `good-oss-citizen` tile are recorded here. The format
 
 ## [Unreleased]
 
+### Fixed — Rubric: detection is mandatory before routing
+
+Re-eval after the routing tighten in #32 (run `019dcfe1-cb1d-71ee-9a48-399a859176a1`) showed the tighten over-corrected: the four routing criteria all moved up substantially (`Matches well enough` classification 8% → 36%, quiet-comment 19% → 56%, manual-review-signal explanation 0% → 33%) but **`Finds the distant breaking-change contradiction` collapsed 89% → 32%**. Reading "filled fields → Matches well enough" too strictly, the agent now goes "fields are filled, comment not needed, done" and skips the contradiction-detection step entirely. The routing emphasis crowded out the detection emphasis.
+
+`skills/preflight/body-template-compliance-rubric.md` now treats detection as a precondition for routing, not a downstream consequence:
+
+- Internal consistency section opens with a mandatory-scan instruction: "You may not skip the scan because the fields look filled. A `Matches well enough` outcome with `Things to check manually: None` for a body that contains a detectable contradiction is a failure of the scan, not a successful classification — the routing rules below assume detection happened first."
+- Route 1 now explicitly requires both halves: the `Matches well enough` classification AND a manual-check entry that quotes both the filled field and the conflicting section. `Matches well enough` with no manual-check entry is now flagged as the wrong outcome, equivalent to a `Slight deviation` with a rewrite request — both halves are mandatory.
+- Final sanity-check list now leads with a detection guard: name at least one part of the body that was checked against another part; confirm the scan was real if the output is `Matches well enough` + `None`.
+
 ### Changed — Rubric tightens routing for "filled field + distant contradiction"
 
 Re-eval after the fixture-path fix in #30 isolated a real rubric ambiguity in `synthetic-pr-subtle-breaking-change-template-compliance`: with the path bug gone and the fixture content visible to baseline, both baseline and with-context still failed the criterion that requires `Matches well enough` + manual-check for a filled template whose Compatibility/Migration field is contradicted by a different Summary section. Both got 0–8% on "Classifies as Matches well enough with manual check" and 0–19% on "Keeps the main suggested comment quiet". The agent reads the rubric's existing soft language ("can be a compliance gap" / "if suspicious but not certain enough") and reasonably picks "ask the contributor to fix the contradicted field" — which is editorial judgment, not template compliance.
