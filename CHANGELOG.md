@@ -6,7 +6,7 @@ All notable changes to the `good-oss-citizen` tile are recorded here. The format
 
 ### Tests — Eval coverage rework for `triage` (no leaks, no bleeding)
 
-Audited the three template-compliance evals against `rules/plugin-evals.md` and addressed bleeding + universal-competence padding; added four tile-specific scenarios for behaviors that previously had no eval coverage.
+Audited the three template-compliance evals against the `jbaruch/coding-policy: plugin-evals` rule and addressed bleeding + universal-competence padding; added four tile-specific scenarios for behaviors that previously had no eval coverage.
 
 Existing-eval fixes:
 
