@@ -10,7 +10,7 @@ Concrete inputs for evals that exercise the body / template compliance rubric (`
 
 There is no deterministic semantic evaluator for these examples. To reproduce by hand:
 
-1. Read `../../../skills/preflight/body-template-compliance-rubric.md`.
+1. Read `../../skills/preflight/body-template-compliance-rubric.md`.
 2. Compare each `bodyFile` in `expected-results.json` against `templates/pr-template.md`.
 3. Apply the body-local evidence rule: only credit information present in the same body file.
 4. Confirm the result bucket matches `expectedResult`.
