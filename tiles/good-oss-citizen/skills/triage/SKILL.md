@@ -62,6 +62,8 @@ Follow the rubric's "Suggested fix/comment rules" exactly:
 - Include any "Things to check manually" entries as optional snippets in a separate section, phrased tentatively.
 - Wrap the suggested comment in a four-backtick markdown block so the user can copy it without breaking on inner triple-backticks.
 
+Proceed immediately to Step 6.
+
 ## Step 6 — Hand off, do not post
 
 Present to the user:
