@@ -119,13 +119,15 @@ For YAML issue forms, map fields by `id`, `label`, and `validations.required`.
 
 Look for contradictions, unexplained scope shifts, suspicious checkbox selections, or materially inconsistent wording inside the same body. You may compare the title against the body for inconsistency checks, but not for giving template-credit.
 
-Examples:
+Examples (all are inconsistencies *across* filled fields, not gaps in any single field):
 
 - one section says this is a bug fix while another describes a new feature,
 - the summary says there are no user-visible changes while another section describes user-visible behavior changes,
 - root cause describes one problem but the proposed solution appears to solve another,
-- selected checkboxes conflict with the body,
+- the `Bug fix` checkbox is checked but a different section describes a feature addition (the checkbox is filled — that's not a compliance gap — but the body disagrees with itself),
 - scope, impact, and verification sections describe materially different changes.
+
+Compliance gaps in checkbox / option lists (covered by the bucket definition, not this section): no required checkbox checked, a required selection that drifts from the template's label.
 
 ### How to route an inconsistency
 
@@ -146,8 +148,8 @@ Use these buckets exactly:
 
 - **Template compliance gaps**
   - Definite body-vs-template problems visible from the selected template and the same body.
-  - Include missing required sections/fields, weak required answers, wrong template choice, required checkbox/field conflicts, materially changed selected checkbox labels, or required answers that are themselves internally self-contradictory (e.g. "Backward compatible: Yes, except this breaks foo" in the same line — the answer cancels itself out).
-  - A filled required answer that is contradicted by a different section of the body is NOT a compliance gap; it routes to "Things to check manually" per the Internal consistency rules.
+  - Include: missing required sections/fields; weak required answers; wrong template choice; required selection absent (no checkbox checked when the template required one); materially changed selected checkbox labels (the selected label drifts from the template's label and becomes broader, narrower, less precise, or ambiguous); or required answers that are themselves internally self-contradictory (e.g. "Backward compatible: Yes, except this breaks foo" in the same line — the answer cancels itself out).
+  - A filled required answer that a different section of the body contradicts — including a selected checkbox option that another section's free text disagrees with — is NOT a compliance gap; it routes to "Things to check manually" per the Internal consistency rules. The compliance gap is when the selection itself is missing or the selected label drifts from the template; not when the selection is present but a different section claims something else.
 - **Information already present elsewhere in the same body**
   - Information requested by the template that appears in the body but not under the expected heading, field, or exact format.
   - Use this bucket to avoid over-asking in the suggested comment.
