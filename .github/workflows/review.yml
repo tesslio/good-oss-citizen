@@ -31,21 +31,15 @@ jobs:
           version: "0.77.0"
           token: ${{ secrets.TESSL_TOKEN }}
 
-      - name: Review changed SKILL.md files
-        run: |
-          set -euo pipefail
-          BASE_SHA="${{ github.event.pull_request.base.sha }}"
-          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-          CHANGED=$(git diff --name-only --diff-filter=ACMR "$BASE_SHA..$HEAD_SHA" \
-                    | grep -E '/SKILL\.md$' || true)
-          if [ -z "$CHANGED" ]; then
-            echo "No SKILL.md files changed — nothing to review."
-            exit 0
-          fi
-          FAIL=0
-          for f in $CHANGED; do
-            echo "::group::Reviewing $f"
-            tessl skill review "$f" --threshold 85 || FAIL=$?
-            echo "::endgroup::"
-          done
-          exit $FAIL
+      # Per `rules/context-artifacts.md` (Mandatory Review) — every skill
+      # gets an explicit `tessl skill review --threshold 85` step so the
+      # gate is visible at the workflow level, not implicit in a loop.
+      # Adding a new skill = add a step here.
+      - name: Review skill — recon
+        run: tessl skill review --threshold 85 tiles/good-oss-citizen/skills/recon/SKILL.md
+      - name: Review skill — propose
+        run: tessl skill review --threshold 85 tiles/good-oss-citizen/skills/propose/SKILL.md
+      - name: Review skill — preflight
+        run: tessl skill review --threshold 85 tiles/good-oss-citizen/skills/preflight/SKILL.md
+      - name: Review skill — triage
+        run: tessl skill review --threshold 85 tiles/good-oss-citizen/skills/triage/SKILL.md

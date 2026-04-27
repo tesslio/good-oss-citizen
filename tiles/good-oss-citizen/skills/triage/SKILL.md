@@ -11,7 +11,7 @@ The rubric used in this skill is `skills/preflight/body-template-compliance-rubr
 
 ## Step 1 — Confirm scope
 
-Confirm the user is asking about an **already-open** issue or pull request on an external open source project — typically a GitHub URL like `https://github.com/OWNER/REPO/issues/N` or `/pull/N`. If the user is drafting a new body before submission, stop and hand off to `propose`. If the user is finalizing their own PR before opening it, stop and hand off to `preflight`. If the project is internal or personal, skip this skill.
+Confirm the user is asking about an **already-open** issue or pull request on an external open source project — typically a GitHub URL like `https://github.com/OWNER/REPO/issues/N` or `/pull/N`. If the user is drafting a new body before submission, stop here and invoke `Skill(skill: "propose")`. If the user is finalizing their own PR before opening it, stop here and invoke `Skill(skill: "preflight")`. If the project is internal or personal, skip this skill.
 
 Proceed immediately to Step 2.
 
@@ -39,7 +39,7 @@ For a pull request:
 bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh templates-pr OWNER/REPO
 ```
 
-Read `data.templates` — an array of `{path, content}`. If empty, the rubric's "no template detected" branch applies: report that and finish (no comment to draft). Otherwise proceed immediately to Step 4.
+Read `data.templates` — an array of `{path, content}`. This skill evaluates detected template files only. If `data.templates` is empty, report that no matching template files were detected for this item and finish (no comment to draft). Also read `data.default_branch` from the same response — Step 5 needs it to construct a stable blob URL. Otherwise proceed immediately to Step 4.
 
 ## Step 4 — Apply the rubric
 
@@ -57,7 +57,7 @@ Follow the rubric's "Suggested fix/comment rules" exactly:
 
 - For `Matches well enough`, write `No comment needed`.
 - For `Slight deviation`, ask only for genuinely missing information and concrete template-alignment fixes.
-- For `Significant deviation`, do not list every individual missing detail — ask the author to follow the template and include a direct GitHub blob URL to the template file.
+- For `Significant deviation`, do not list every individual missing detail — ask the author to follow the template and include a direct GitHub blob URL to the template file. Construct the URL as `https://github.com/OWNER/REPO/blob/<default_branch>/<template-path>` using the `default_branch` and the chosen template's `path` returned by Step 3 — never guess `main` / `master`, since the host repo may use neither.
 - Always say `template`, never `form`.
 - Include any "Things to check manually" entries as optional snippets in a separate section, phrased tentatively.
 - Wrap the suggested comment in a four-backtick markdown block so the user can copy it without breaking on inner triple-backticks.
