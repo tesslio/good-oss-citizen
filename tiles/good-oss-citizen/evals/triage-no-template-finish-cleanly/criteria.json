@@ -1,0 +1,31 @@
+{
+  "context": "Tests the triage skill's tile-prescribed behavior when the host repository has NO issue template at all. Target: tesslio/good-oss-citizen issue #19 (an open bug report on a repo with no `.github/ISSUE_TEMPLATE/` directory and no legacy `ISSUE_TEMPLATE.md`). The triage skill's Step 3 explicitly says: 'If `data.templates` is empty, report that no matching template files were detected for this item and finish (no comment to draft).' A baseline agent told 'tell me whether the body is good enough or whether the author should be asked for more' will typically (a) invent a generic bug-report structure (Description / Repro / Environment / etc.), (b) list which of those generic sections are 'missing' from the issue body, and (c) draft a polite comment asking the author to add them. The tile's value here is the opposite of helpfulness theater: stop fabricating a template, report the absence, and let the maintainer decide whether to engage outside the template-compliance frame.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Discovers the repo has no issue template",
+      "max_score": 12,
+      "description": "The agent fetches issue templates for tesslio/good-oss-citizen and observes that none are returned (`data.templates` is empty in the helper response, or equivalent observation by other means). Final-answer evidence: the agent explicitly states the repo has no issue template. Does not require visible tool-call telemetry — naming the absence is sufficient."
+    },
+    {
+      "name": "Does NOT invent a generic issue template structure",
+      "max_score": 16,
+      "description": "The agent does not introduce a fabricated structure (Description / Steps to Reproduce / Expected Behavior / Environment / Severity / etc.) and grade the issue body against it. The rubric's body-local evidence rule is reinforced by the triage skill's Step 3: when no template file is detected, this skill stops. Tile-specific: a baseline 'help me with this issue' agent reflexively applies a generic bug-report template; the tile prescribes the opposite."
+    },
+    {
+      "name": "Does NOT draft a comment listing 'missing' fields",
+      "max_score": 14,
+      "description": "Because there is no template, there is nothing to align with. The output must NOT contain a suggested comment asking the author to add Environment, version info, severity, reproduction steps, or any other field the template doesn't define. `No comment needed` (or equivalent: 'no template to compare against, no comment to draft', 'finish here', etc.) is the tile-prescribed response."
+    },
+    {
+      "name": "Distinguishes 'no template' from 'body is bad'",
+      "max_score": 8,
+      "description": "The agent doesn't conflate 'this repo has no template' with 'this issue is incomplete'. The body itself may have its own quality concerns the user could address as a maintainer judgement, but those are outside the template-compliance frame. The output makes the distinction clear — for example, by saying the absence of a template means there's nothing to compliance-check, not that the body is fine or unfine on substance."
+    },
+    {
+      "name": "Does not call GitHub APIs to post anything",
+      "max_score": 4,
+      "description": "The agent does not post a comment, open a discussion, or otherwise modify GitHub state. Triage is intelligence-only."
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "context": "Tests the rubric's tile-specific discriminator: `.github/ISSUE_TEMPLATE/config.yml` is GitHub's issue-template chooser configuration (external links, contact methods, blank-issue toggle), NOT a fillable issue body template. The rubric explicitly says 'Discard `.github/ISSUE_TEMPLATE/config.yml` and `.github/ISSUE_TEMPLATE/config.yaml` before counting or selecting issue templates. … If only chooser config files remain, treat the repository as having no issue body template.' A baseline agent handed this fixture set will look at `config.yml`, see fields like `name`, `url`, `about`, and try to grade the issue body against those fields — or treat the chooser config's contact links as 'required sections' the issue body should answer. The tile-prescribed behavior is to discard `config.yml` from the count, see no remaining template, and finish with no comment to draft. The task does not name `config.yml` as 'not a template' or 'chooser config'; the agent has to recognize it from the file's contents (`blank_issues_enabled`, `contact_links`).",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Recognizes `config.yml` as the chooser config, not a body template",
+      "max_score": 18,
+      "description": "The agent identifies `templates/config.yml` as GitHub's issue-template chooser configuration (the file with `blank_issues_enabled` / `contact_links`), not as a fillable issue body template. Tile-specific: the rubric explicitly enumerates this discriminator; baseline agents will treat any YAML file in `.github/ISSUE_TEMPLATE/` as a YAML form and try to grade the body against its fields."
+    },
+    {
+      "name": "Concludes the repo has no issue body template",
+      "max_score": 12,
+      "description": "After discarding `config.yml`, the agent concludes that the repository effectively has no issue body template to compare the body against — equivalent to the 'no template detected' branch of the rubric and the triage skill's Step 3 'finish, no comment to draft' branch."
+    },
+    {
+      "name": "Does NOT grade the body against `config.yml`'s fields",
+      "max_score": 12,
+      "description": "The output does not treat `name` / `url` / `about` from `config.yml` as required sections the body should fill, does not ask the author to add `Security disclosure` or `General questions and discussions` headings, and does not flag the body for missing `contact_links` content. Tile-specific: this is the exact failure mode the discriminator prevents."
+    },
+    {
+      "name": "Does NOT draft a comment listing 'missing' fields against an invented template",
+      "max_score": 10,
+      "description": "Because there is no fillable template, there is nothing for the body to align with. The output must NOT contain a suggested comment asking the author to add Severity, Affected component, Reproduction steps, Expected behavior, etc. — those are template invention. `No comment needed` (or equivalent: 'no template to compare against, finishing here') is the tile-prescribed response."
+    },
+    {
+      "name": "If `config.yml` is mentioned, mentions it correctly",
+      "max_score": 4,
+      "description": "When the output references `config.yml` it does so accurately: as a chooser/contact-link configuration, not as a body template. The wording uses the term `template` (not `form`) when describing the absence of a real issue-body template — the rubric says 'Always use the word `template`, never `form`'."
+    }
+  ]
+}

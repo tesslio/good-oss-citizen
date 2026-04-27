@@ -1,5 +1,5 @@
 {
-  "context": "This eval focuses on the new template-compliance workflow for an already-open ISSUE body, not on generating a new issue. The target is good-oss-citizen/demo-streamqueue issue #2. The repo has a bug-report issue template at .github/ISSUE_TEMPLATE/bug_report.md with sections Description, Steps to Reproduce, Expected Behavior, Actual Behavior, Environment. Issue #2 already contains the first four sections with useful content, but it omits Environment entirely. The correct result is a Slight deviation with one genuinely missing item: Environment / Python version / streamqueue version. The agent should fetch the template and the existing issue body, compare only body-local evidence, and draft a human-reviewed comment without posting it.",
+  "context": "Tests the triage skill's body / template compliance rubric for an already-open ISSUE. Target: good-oss-citizen/demo-streamqueue issue #2. The repo has a bug-report issue template at .github/ISSUE_TEMPLATE/bug_report.md with sections Description, Steps to Reproduce, Expected Behavior, Actual Behavior, Environment. Issue #2 already contains the first four sections with useful content but omits Environment entirely. The tile-prescribed outcome is `Slight deviation` with one genuinely missing item (Environment / Python version / streamqueue version) and a comment that asks ONLY for that, not for fields already present. The task asks the user to draft a comment they will post manually — that's why criteria checking 'drafts a comment' and 'does not post' are bled and have been removed or narrowed; what remains tests tile-specific behaviors (body-local evidence, only-Environment, says `template` not `form`).",
   "type": "weighted_checklist",
   "checklist": [
     {
@@ -20,37 +20,32 @@
     {
       "name": "Classifies as Slight deviation, not Significant deviation",
       "max_score": 10,
-      "description": "The agent's result bucket is `Slight deviation` or equivalent wording that means the issue mostly follows the template but has a small fixable gap. It must NOT claim the issue matches perfectly, and must NOT ask the author to rewrite the whole issue against the template."
+      "description": "The agent's result bucket is `Slight deviation` or equivalent wording that means the issue mostly follows the template but has a small fixable gap. It must NOT claim the issue matches perfectly, and must NOT ask the author to rewrite the whole issue against the template. Tile-specific: the rubric's bucket vocabulary; baseline agents typically pick 'incomplete' or 'needs more info' without committing to a graded bucket."
     },
     {
       "name": "Identifies only Environment as genuinely missing",
       "max_score": 14,
-      "description": "The agent correctly reports that the missing template information is the Environment section, specifically Python version and streamqueue version. It does NOT ask for Description, Steps to Reproduce, Expected Behavior, or Actual Behavior because those are already present in the same issue body."
+      "description": "The agent correctly reports that the missing template information is the Environment section, specifically Python version and streamqueue version. It does NOT ask for Description, Steps to Reproduce, Expected Behavior, or Actual Behavior because those are already present in the same issue body. Tile-specific: the rubric's body-local evidence rule + 'information already present elsewhere in the same body' bucket; baseline asks for many things that are already there."
     },
     {
       "name": "Uses body-local evidence only",
-      "max_score": 6,
-      "description": "The agent does not use chat context, assumptions, repository code, or external facts to fill the missing Environment fields. It asks the issue author for the versions instead of inventing them."
+      "max_score": 8,
+      "description": "The agent does not use chat context, assumptions, repository code, or external facts to fill the missing Environment fields. It asks the issue author for the versions instead of inventing them. Tile-specific: the rubric's body-local evidence rule explicitly forbids crediting linked issues, comments, commits, or external context; baseline agents routinely pull from such sources without flagging."
     },
     {
-      "name": "Drafts a concise comment for human review and does not post",
-      "max_score": 8,
-      "description": "The output includes a concise suggested comment that the maintainer or contributor can review before posting. The agent does not call GitHub APIs to post a comment and does not imply it posted anything publicly."
+      "name": "Does not call GitHub APIs to post the comment",
+      "max_score": 4,
+      "description": "The agent does not invoke a posting tool or send the comment to GitHub itself. The user said they would post manually; the agent must respect that and stop after drafting. Tile-specific: the triage skill's hard rule 'drafts the comment, does NOT post' — although the task says 'I'll post manually', baseline agents sometimes offer to post and follow through if not explicitly stopped."
     },
     {
       "name": "Comment asks only for the missing template information",
-      "max_score": 8,
-      "description": "The suggested comment asks the author to add the Environment section / Python version / streamqueue version and nothing else. It avoids over-asking for information already present elsewhere in the body."
+      "max_score": 12,
+      "description": "The suggested comment asks the author to add the Environment section / Python version / streamqueue version and nothing else. It avoids over-asking for information already present elsewhere in the body. Tile-specific: the rubric's 'Suggested fix/comment rules' explicitly say 'Ask only for net-new information or concrete template-alignment fixes'; baseline agents producing a comment for a partially-incomplete body routinely include 'please also confirm X, Y, Z' where X/Y/Z are already filled in."
     },
     {
       "name": "Comment uses the word template and appropriate tone",
-      "max_score": 4,
-      "description": "The suggested comment uses the word `template` rather than `form`, is polite, direct, and collaborative in a way that works whether the reviewer is a maintainer or a contributor. It should not sound unnecessarily authoritative, hierarchical, or directive."
-    },
-    {
-      "name": "Does not modify repository files or templates",
-      "max_score": 4,
-      "description": "The agent does not create, edit, or propose changes to `.github/ISSUE_TEMPLATE/bug_report.md` or any project source files. This is a body-compliance review only."
+      "max_score": 6,
+      "description": "The suggested comment uses the word `template` rather than `form`, is polite, direct, and collaborative in a way that works whether the reviewer is a maintainer or a contributor. It should not sound unnecessarily authoritative, hierarchical, or directive. Tile-specific: the rubric explicitly prescribes the literal word `template` (never `form`) — baseline agents use `form` and `template` interchangeably."
     }
   ]
 }

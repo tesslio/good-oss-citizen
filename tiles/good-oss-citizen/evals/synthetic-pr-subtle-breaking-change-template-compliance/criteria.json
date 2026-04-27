@@ -1,12 +1,7 @@
 {
-  "context": "This eval focuses on the template-compliance skill's ability to separate filled template fields from subtle body-internal consistency risks. The synthetic PR template has a Compatibility / Migration section with explicit Yes/No fields. The body fills that section as backward compatible with no migration needed, but much earlier in Summary says replacing `messageBridge.rawCaption` with `messageBridge.safeCaption` is a breaking change for plugins importing the old helper. The correct behavior is not to demand a template rewrite: the fields are present. Instead, classify as Matches well enough with a Things to check manually entry or optional snippet that highlights the distant contradiction for human judgment.",
+  "context": "This eval tests the body / template compliance rubric's ability to distinguish 'all required template fields are filled' from 'something elsewhere in the body contradicts a filled field'. The synthetic PR template has a Compatibility / Migration section with explicit Yes/No fields. The draft body fills that section as backward compatible with no migration needed, but Summary much earlier in the same body says replacing `messageBridge.rawCaption` with `messageBridge.safeCaption` is a breaking change for plugins importing the old helper. The tile-prescribed result is `Matches well enough` (the template is filled) plus a `Things to check manually` entry surfacing the distant contradiction for human judgment — NOT a rewrite request and NOT a request for fields that are already present. The task does not prescribe these buckets or the manual-check concept; both are tile-specific values from `skills/preflight/body-template-compliance-rubric.md`.",
   "type": "weighted_checklist",
   "checklist": [
-    {
-      "name": "Uses the local template-compliance fixture files",
-      "max_score": 6,
-      "description": "The agent compares `templates/pr-template.md` against `bodies/introduce-breaking-change-contradiction.md` from the synthetic-pr-template fixtures. It does not fetch a GitHub issue/PR, invent a different template, or review code correctness."
-    },
     {
       "name": "Recognizes the Compatibility / Migration fields are present",
       "max_score": 10,
@@ -19,18 +14,18 @@
     },
     {
       "name": "Classifies as Matches well enough with manual check, not a rewrite request",
-      "max_score": 12,
-      "description": "The result is `Matches well enough` (or equivalent) with a `Things to check manually` entry, because the template is filled and the issue is a suspicious consistency check for a reviewer. `Slight deviation` is partial credit only if it clearly avoids asking for a full rewrite. `Significant deviation` is incorrect."
+      "max_score": 18,
+      "description": "The result bucket is `Matches well enough` (or equivalent wording — 'mostly compliant', 'template is followed', etc.) AND the agent surfaces the contradiction as a manual-check / reviewer-judgment item rather than a template-compliance gap. `Slight deviation` is partial credit only if it clearly avoids asking for a full rewrite. `Significant deviation` is incorrect — the template is filled. Tile-specific: a baseline agent told 'tell me what to do' on a body with a real-looking inconsistency will likely ask the author to rewrite the Compatibility section; the rubric's 'fields are present, surface as manual check' is the tile's value."
     },
     {
       "name": "Keeps the main suggested comment quiet",
       "max_score": 8,
-      "description": "The main suggested comment is `No comment needed` or otherwise does not ask the author to follow/rewrite the template. Any wording about the contradiction is kept as an optional manual-check snippet for the reviewer, phrased tentatively rather than as an accusation."
+      "description": "The main suggested comment is `No comment needed` or otherwise does not ask the author to follow/rewrite the template. Any wording about the contradiction is kept as an optional manual-check snippet for the reviewer, phrased tentatively rather than as an accusation. Tile-specific: the rubric prescribes 'No comment needed' as the literal output for `Matches well enough` and 'Optional comment snippets for manual use' as a separate section."
     },
     {
       "name": "Does not over-ask for already-present template content",
       "max_score": 8,
-      "description": "The agent does not ask for Summary, Security Impact, Compatibility / Migration, Repro / Verification, User-visible changes, Environment, Human verification, or the Yes/No field, because those fields are already present in the same body."
+      "description": "The agent does not ask for Summary, Security Impact, Compatibility / Migration, Repro / Verification, User-visible changes, Environment, Human verification, or the Yes/No field, because those fields are already present in the same body. Tile-specific: the rubric's body-local evidence rule + 'Information already present elsewhere in the same body' bucket — baseline often asks for confirmation of present information."
     },
     {
       "name": "Explains why this is a manual review signal",

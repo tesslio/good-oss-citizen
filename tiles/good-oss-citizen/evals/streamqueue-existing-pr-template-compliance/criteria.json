@@ -1,5 +1,5 @@
 {
-  "context": "This eval focuses on the new template-compliance workflow for an existing PULL REQUEST body. The target is good-oss-citizen/demo-streamqueue PR #8. The repo has a single PR template at .github/PULL_REQUEST_TEMPLATE.md with sections Summary, Related Issue, Type of Change, AI Assistance, Testing, Checklist. PR #8 has Summary, Related Issue, Type of Change, Testing, and Checklist, but it omits the AI Assistance section entirely and only retains one Testing checkbox and one Checklist checkbox. The correct behavior is to fetch the existing PR body with the new body command, compare against the PR template, classify the body as a Significant deviation or a clearly serious template deviation, and draft a human-reviewed comment asking the author to update the PR body against the template rather than listing every missing checkbox.",
+  "context": "Tests the triage skill's body / template compliance rubric for an already-existing PULL REQUEST. Target: good-oss-citizen/demo-streamqueue PR #8. The repo has a single PR template at .github/PULL_REQUEST_TEMPLATE.md with sections Summary, Related Issue, Type of Change, AI Assistance, Testing, Checklist. PR #8 has Summary, Related Issue, Type of Change, Testing, and Checklist, but it omits the AI Assistance section entirely and only retains one Testing checkbox and one Checklist checkbox. The tile-prescribed outcome is `Significant deviation` (a required AI Assistance section is missing AND multiple required template items were stripped) plus a comment that asks the author to update the body against the template — NOT a long nit list of every checkbox. The comment must include a direct GitHub blob URL constructed with `default_branch` (per the triage skill's Step 5 rule). 'Drafts a comment' and 'does not post' are bled by the task language and have been removed; what remains tests tile-specific behaviors.",
   "type": "weighted_checklist",
   "checklist": [
     {
@@ -20,37 +20,27 @@
     {
       "name": "Classifies as Significant deviation or serious template deviation",
       "max_score": 10,
-      "description": "The agent does not call the PR body a match. It reports `Significant deviation` or clearly equivalent wording because a required AI Assistance section is missing and multiple required checklist/template items were stripped. Slight deviation is at most partial credit."
+      "description": "The agent does not call the PR body a match. It reports `Significant deviation` or clearly equivalent wording because a required AI Assistance section is missing and multiple required checklist/template items were stripped. Slight deviation is at most partial credit. Tile-specific: the rubric's bucket vocabulary."
     },
     {
       "name": "Identifies missing AI Assistance as a primary compliance gap",
-      "max_score": 12,
-      "description": "The agent explicitly identifies the missing AI Assistance section / Tool / Used for / Human-verified fields as a primary template compliance gap. This must be framed as a body/template gap, not as a judgment about whether AI was actually used."
+      "max_score": 16,
+      "description": "The agent explicitly identifies the missing AI Assistance section / Tool / Used for / Human-verified fields as a primary template compliance gap. This must be framed as a body/template gap, not as a judgment about whether AI was actually used. Tile-specific: the rubric's emphasis on AI disclosure as a required section even when the body omits it; baseline agents often gloss over a missing AI Assistance block as 'optional metadata'."
     },
     {
       "name": "Recognizes stripped Testing and Checklist items without over-listing",
-      "max_score": 8,
-      "description": "The agent notices that the PR body retained only a subset of the Testing and Checklist items from the template. For a Significant deviation, it should summarize this as stripped template checklist/testing items rather than producing a long nit list of every checkbox."
+      "max_score": 12,
+      "description": "The agent notices that the PR body retained only a subset of the Testing and Checklist items from the template. For a Significant deviation, it should summarize this as stripped template checklist/testing items rather than producing a long nit list of every checkbox. Tile-specific: the rubric's 'Significant deviation' rule says 'do not list many individual missing details. Ask the author to follow the template' — baseline agents reflexively enumerate every checkbox."
     },
     {
       "name": "Does not ask for information already present",
       "max_score": 6,
-      "description": "The agent does not ask the author to add Summary, Related Issue, Type of Change, Testing, or Checklist headings generically, because those headings are already present. It focuses on restoring/filling the missing or stripped template-required parts."
+      "description": "The agent does not ask the author to add Summary, Related Issue, Type of Change, Testing, or Checklist headings generically, because those headings are already present. It focuses on restoring/filling the missing or stripped template-required parts. Tile-specific: rubric's body-local evidence + 'information already present' bucket."
     },
     {
-      "name": "Drafts a concise comment with template link and no posting",
+      "name": "Comment uses 'template' literal and includes a blob URL with default_branch",
       "max_score": 10,
-      "description": "The output includes a concise suggested comment for human review, does not post it, uses the word `template`, and includes a direct GitHub blob URL to `.github/PULL_REQUEST_TEMPLATE.md` because the comment asks the author to update the body against the template."
-    },
-    {
-      "name": "Separates template compliance from code/review merits",
-      "max_score": 4,
-      "description": "The agent does not evaluate whether PR #8's technical approach is correct, whether it should have been merged, or whether dropping oldest messages is a good fix. The task is body-template compliance only."
-    },
-    {
-      "name": "Does not modify repository files or templates",
-      "max_score": 4,
-      "description": "The agent does not create, edit, or propose changes to `.github/PULL_REQUEST_TEMPLATE.md` or any project source files. This is a body-compliance review only."
+      "description": "The suggested comment uses the word `template` (not `form`) and includes a direct GitHub blob URL to `.github/PULL_REQUEST_TEMPLATE.md` constructed with the repo's `default_branch` (e.g. `https://github.com/good-oss-citizen/demo-streamqueue/blob/<default_branch>/.github/PULL_REQUEST_TEMPLATE.md`). Tile-specific: the triage skill's Step 5 explicitly tells the agent to construct the URL from `data.default_branch` rather than guessing `main`/`master`; baseline agents either omit the link entirely or guess `main`/`master`."
     }
   ]
 }
