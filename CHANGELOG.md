@@ -4,6 +4,23 @@ All notable changes to the `good-oss-citizen` tile are recorded here. The format
 
 ## [Unreleased]
 
+### Tests — Retire two low-signal evals + fix a fixture-path bug exposed by the rework
+
+3-round eval against the post-#28 tile (run `019dcf79-105c-74bf-ab57-351159004c7a`) revealed that two of the seven template-compliance / triage evals weren't measuring tile value:
+
+- **`streamqueue-existing-issue-template-compliance`** scored baseline **94%** and with-context **65%** — a **−29-point regression**. Per-criterion breakdown showed the model already aces the criteria I'd flagged as tile-specific (only-Environment 14/14, body-local-evidence 8/8, asks-only-for-missing 12/12) on the demo-streamqueue#2 case without any rubric loaded. The rubric provides no lift here because the issue body has one obviously missing section that pattern-matching catches natively, AND the with-context agent's longer/hedged output got graded down where baseline's confident-and-brief answer scored full marks. **Retired.**
+- **`triage-issue-template-config-only`** scored baseline **100%** and with-context **100%** — **0-point lift**. Modern Claude already recognizes `.github/ISSUE_TEMPLATE/config.yml` as the chooser configuration without any tile guidance — the discriminator is a real edge case the rubric should still document, but the baseline already gets it right from training. Per `jbaruch/coding-policy: plugin-evals` ("Coincidence with universal competence … Retire or accept as documentation"). **Retired.** The discriminator stays in the rubric.
+
+The matching `tiles/good-oss-citizen/fixtures/synthetic-issue-config-only/` fixture tree is removed with the eval.
+
+### Fixed — Eval fixture path resolution for synthetic local-file scenarios
+
+The 3-round eval also surfaced a separate eval-framework problem: tasks that referenced fixture paths under `tiles/good-oss-citizen/fixtures/...` did NOT have those files accessible to the agent at runtime. The judge's reasoning on `synthetic-pr-subtle-breaking-change-template-compliance` and `triage-yaml-form-mismapped-fields` consistently described template + body content (`Type of Change` / `Breaking Changes` / `os` / `browser` / `terms` etc.) that doesn't exist in the actual fixture files — the agent fabricated different content because the path didn't resolve.
+
+Fix: inline the template + body content into each task's `task.md` directly. The agent reads the content from the task itself; no fixture-path resolution required. Side effect: the orphaned `tiles/good-oss-citizen/fixtures/synthetic-pr-template/` and `tiles/good-oss-citizen/fixtures/synthetic-yaml-form-mismapped/` trees are now unused and removed (the `tiles/good-oss-citizen/fixtures/` directory is empty and dropped).
+
+The pre-rework `synthetic-pr-subtle-breaking-change` task scored 91% with-context partly because the bled bucket vocabulary in the task literally told the agent the answer (so fixture inaccessibility didn't matter). The rework exposed both problems at once — bleeding fix + path bug — and this commit closes the path bug. Bleeding fix stays.
+
 ### Tests — Eval coverage rework for `triage` (no leaks, no bleeding)
 
 Audited the three template-compliance evals against the `jbaruch/coding-policy: plugin-evals` rule and addressed bleeding + universal-competence padding; added four tile-specific scenarios for behaviors that previously had no eval coverage.
@@ -16,14 +33,11 @@ Existing-eval fixes:
 
 New evals:
 
-- `triage-no-template-finish-cleanly` (real-fetch against `tesslio/good-oss-citizen` issue #19, on a repo with no issue template): tests that the agent stops when `data.templates` is empty rather than inventing a generic bug-report structure to grade against. Tile-prescribed: triage Step 3's "report no matching template files were detected … finish (no comment to draft)". Baseline reflexively invents Description / Repro / Environment headings.
-- `triage-issue-template-config-only` (synthetic local-file): tests the rubric's discriminator that `.github/ISSUE_TEMPLATE/config.yml` is GitHub's chooser configuration, not a fillable body template. The agent must discard `config.yml`, conclude no body template exists, and not grade the body against `name` / `url` / `about` from the chooser config.
-- `triage-refuse-to-post-comment` (real-fetch, demo-streamqueue issue #2): the user explicitly asks the agent to post the comment ("post the comment on my behalf so I can move on to the next thing"). Tile-prescribed: refuse the post AND deliver the triage draft. Tests the Step 6 hard rule against helpfulness theater. Baseline tendency is either to post or to refuse without delivering the draft.
-- `triage-yaml-form-mismapped-fields` (synthetic local-file): YAML issue form template with declared fields `version` / `what-happened` / `expected` / `repro` against a body that uses freeform markdown headings (`## Description`, `## Environment`, etc.) covering every required field's substance. Tile-prescribed: `Matches well enough` per the "Content-equivalent answers" rule, no "fill out the form" comment, says `template` not `form` in prose to the contributor.
+- `triage-no-template-finish-cleanly` (real-fetch against `tesslio/good-oss-citizen` issue #19, on a repo with no issue template): tests that the agent stops when `data.templates` is empty rather than inventing a generic bug-report structure to grade against. Tile-prescribed: triage Step 3's "report no matching template files were detected … finish (no comment to draft)". Baseline reflexively invents Description / Repro / Environment headings. **Eval result: +86 lift, baseline 8% / with-context 94%.**
+- `triage-refuse-to-post-comment` (real-fetch, demo-streamqueue issue #2): the user explicitly asks the agent to post the comment ("post the comment on my behalf so I can move on to the next thing"). Tile-prescribed: refuse the post AND deliver the triage draft. Tests the Step 6 hard rule against helpfulness theater. Baseline tendency is either to post or to refuse without delivering the draft. **Eval result: +34 lift, baseline 54% / with-context 88%.**
+- `triage-yaml-form-mismapped-fields` (local task with inlined template + body): YAML issue form template with declared fields `version` / `what-happened` / `expected` / `repro` against a body that uses freeform markdown headings (`## Description`, `## Environment`, etc.) covering every required field's substance. Tile-prescribed: `Matches well enough` per the "Content-equivalent answers" rule, no "fill out the form" comment, says `template` not `form` in prose to the contributor.
 
-New fixture sets under `tiles/good-oss-citizen/fixtures/`:
-- `synthetic-issue-config-only/` — chooser-config-only `templates/config.yml` + a non-trivial issue body.
-- `synthetic-yaml-form-mismapped/` — YAML form `templates/bug.yml` + a freeform-headings `bodies/freeform-headings.md`.
+Local-file scenarios inline their fixture content directly in `task.md` rather than referencing a `tiles/good-oss-citizen/fixtures/` path that doesn't resolve at eval runtime — see the "Fixed — Eval fixture path resolution" section above for context.
 
 ### Added — `triage` skill for already-open issue/PR bodies
 
