@@ -6,7 +6,7 @@ All notable changes to the `good-oss-citizen` tile are recorded here. The format
 
 ### Fixed — Rubric: detection is mandatory before routing
 
-Re-eval after the routing tighten in #32 (run `019dcfe1-cb1d-71ee-9a48-399a859176a1`) showed the tighten over-corrected: the four routing criteria all moved up substantially (`Matches well enough` classification 8% → 36%, quiet-comment 19% → 56%, manual-review-signal explanation 0% → 33%) but **`Finds the distant breaking-change contradiction` collapsed 89% → 32%**. Reading "filled fields → Matches well enough" too strictly, the agent now goes "fields are filled, comment not needed, done" and skips the contradiction-detection step entirely. The routing emphasis crowded out the detection emphasis.
+Re-eval after the routing tightening in #32 (run `019dcfe1-cb1d-71ee-9a48-399a859176a1`) showed the tightening over-corrected: the four routing criteria all moved up substantially (`Matches well enough` classification 8% → 36%, quiet-comment 19% → 56%, manual-review-signal explanation 0% → 33%) but **`Finds the distant breaking-change contradiction` collapsed 89% → 32%**. Reading "filled fields → Matches well enough" too strictly, the agent now goes "fields are filled, comment not needed, done" and skips the contradiction-detection step entirely. The routing emphasis crowded out the detection emphasis.
 
 `skills/preflight/body-template-compliance-rubric.md` now treats detection as a precondition for routing, not a downstream consequence:
 
