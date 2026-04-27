@@ -4,6 +4,23 @@ All notable changes to the `good-oss-citizen` tile are recorded here. The format
 
 ## [Unreleased]
 
+### Fixed — Rubric: scope the mandatory consistency scan to fully-filled bodies
+
+Re-eval after #34 (run `019dd006-0f7b-70c1-92e2-4407e9f93f99`) showed the detection-mandatory fix landed dramatically on its target — `synthetic-pr-subtle-breaking-change` jumped from 51% to **100%** with-context, and the contradiction-detection criterion that had collapsed in #32 (89% → 32%) recovered to **100%**. Every criterion on that scenario hit 100%.
+
+But the broad "Detection is mandatory before deciding the result bucket" framing leaked into other scenarios it shouldn't have:
+
+- `streamqueue-existing-pr-template-compliance` with-context: 94% → 75%. Specifically, "Identifies missing AI Assistance as a primary compliance gap" dropped 77% → 25%. PR #8 has a *missing required section*, not a contradiction. The new rubric pushed the agent to focus on contradiction-hunting at the expense of gap-detection.
+- `triage-refuse-to-post-comment` with-context: 80% → 61%. "Still produces the triage draft" dropped 100% → 46%, "Triage outcome correct" 100% → 35%. Effort the agent spent on the consistency scan came out of the actual triage draft.
+
+`skills/preflight/body-template-compliance-rubric.md` now scopes the mandatory scan to the case it was designed for — fully-filled bodies whose result-bucket choice genuinely turns on consistency:
+
+- New "When the consistency scan applies" sub-section: skip the scan when required sections are missing (compliance gaps dominate); run the scan when every required section is filled with substantive content (the bucket choice hinges on whether the filled answers agree); run with reduced weight when most are filled but one is missing.
+- The "you may not skip the scan because the fields look filled" guard now applies *only when every required section is filled*, not as a blanket rule.
+- Final sanity-check detection guard narrowed accordingly: the "name a part of the body you checked against another part" check only applies to fully-filled `Matches well enough + None` outputs. When required sections are missing, an empty manual-check is appropriate and not a failure.
+
+This keeps the #15 win without the over-application that hurt #12 and #14.
+
 ### Fixed — Rubric: detection is mandatory before routing
 
 Re-eval after the routing tightening in #32 (run `019dcfe1-cb1d-71ee-9a48-399a859176a1`) showed the tightening over-corrected: the four routing criteria all moved up substantially (`Matches well enough` classification 8% → 36%, quiet-comment 19% → 56%, manual-review-signal explanation 0% → 33%) but **`Finds the distant breaking-change contradiction` collapsed 89% → 32%**. Reading "filled fields → Matches well enough" too strictly, the agent now goes "fields are filled, comment not needed, done" and skips the contradiction-detection step entirely. The routing emphasis crowded out the detection emphasis.

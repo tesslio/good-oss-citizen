@@ -117,7 +117,13 @@ For YAML issue forms, map fields by `id`, `label`, and `validations.required`.
 
 ## Internal consistency and manual checks
 
-Detection is mandatory. Before deciding the result bucket, scan every filled field of the body and look for contradictions, unexplained scope shifts, suspicious checkbox selections, or materially inconsistent wording inside the same body. **You may not skip the scan because the fields look filled.** A `Matches well enough` outcome with `Things to check manually: None` for a body that contains a detectable contradiction is a failure of the scan, not a successful classification — the routing rules below assume detection happened first.
+This section governs **inconsistency detection** — contradictions and scope shifts *between* filled fields of the same body. It does NOT replace gap detection (missing required sections, empty / placeholder fields). Apply gap detection first; then run the consistency scan below.
+
+### When the consistency scan applies
+
+- **Skip the scan** when the body has missing required sections / fields / empty placeholder answers — those are template-compliance gaps and dominate the result bucket. Asking about a contradiction between two filled sections is academic if a third required section is absent. Address the gap; the consistency scan can wait.
+- **Run the scan** when every required section / field is filled with a substantive answer. At that point the result bucket choice depends on whether the filled answers internally agree, so the scan is the work that decides between `Matches well enough` and `Slight deviation`. **You may not skip the scan in this case because the fields look filled** — a `Matches well enough` outcome with `Things to check manually: None` on a fully-filled body that contains a detectable contradiction is a failure of the scan, not a successful classification. The routing rules below assume the scan happened.
+- **Run the scan with reduced weight** when most required sections are filled but one is missing or empty. The compliance gap is the primary item; surface contradictions among the filled sections only when they are clear, and don't go hunting if nothing presents itself naturally.
 
 You may compare the title against the body for inconsistency checks, but not for giving template-credit.
 
@@ -211,7 +217,7 @@ Only include this section when **Things to check manually** is not `None`.
 
 Before finalizing, re-read the checked body and verify:
 
-- you actually scanned for inconsistencies — name at least one part of the body you checked against another part. If your output is `Matches well enough` and `Things to check manually: None`, confirm the scan was real, not skipped because the fields looked filled,
+- if every required section is filled and your output is `Matches well enough` with `Things to check manually: None`, confirm the consistency scan was real — name at least one part of the body you checked against another part. (When required sections are missing, this check does not apply: the gap detection has already done its work and an empty manual-check is appropriate.),
 - every reported gap maps to a specific template instruction or explicit repo guidance,
 - the suggested comment does not ask for information already present somewhere else in the same body,
 - every requested change is either genuinely missing information or a real template-alignment fix that improves clarity,
