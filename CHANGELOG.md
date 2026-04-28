@@ -4,6 +4,23 @@ All notable changes to the `good-oss-citizen` tile are recorded here. The format
 
 ## [Unreleased]
 
+### Changed — Tighten two low-lift template-compliance evals
+
+Post-merge 3-run eval after #39 (run `019dd134-b762-7619-bb00-25ee15641dab`) flagged two scenarios where baseline already cleared 75% and the tile's lift was driven by narrow format details rather than the rubric's core prescriptions:
+
+- `streamqueue-existing-pr-template-compliance` (baseline 75.7% / with-context 92.7% / lift +17): the only criterion the tile lifted on was a comment-formatting rule that the comment use the word `template` and include a blob URL constructed with `default_branch`. Baseline already passed five high-weight criteria — template-compliance flow, fetching template + body, selecting `.github/PULL_REQUEST_TEMPLATE.md`, identifying the missing AI Assistance section, and not asking for information already present.
+- `synthetic-pr-subtle-breaking-change-template-compliance` (baseline 78% / with-context 98.7% / lift +20.7): baseline detected the contradiction by pattern-matching the literal phrase "breaking change" in the body, then scored partially on routing.
+
+Both scenarios were reframed to test detection depth and tile-prescribed routing rather than format trivia or literal pattern-matching:
+
+- `streamqueue-existing-pr-template-compliance`: fixture (`good-oss-citizen/demo-streamqueue#8` body) repurposed so every required section is filled, including AI Assistance as `Tool: None / Human-verified: Yes — wrote and reviewed every line manually`, while the same body ends with a `🤖 Generated with [Claude Code]` line and a `Co-Authored-By: Claude` trailer. The tile-prescribed outcome is now `Slight deviation` plus a focused clarification asking the author to reconcile the AI disclosure with the trailer. Criteria reweighted accordingly: a 22-point detection criterion replaces the URL/`default_branch` rule and the missing-section rule.
+- `synthetic-pr-subtle-breaking-change-template-compliance`: body rewritten to drop the literal phrase "breaking change" — Summary now says the old `messageBridge.rawCaption` export is removed and plugins still calling it will need to update their imports, while Compatibility / Migration still answers `Backward compatible? Yes / Migration needed? No`. The contradiction-detection criterion is reworded to grade the inference (export-removal vs backward-compatible answers) and explicitly notes that pattern-matching `breaking change` does not count.
+
+Re-eval (`019dd155-ca0b-77e5-9b7a-6149149c5f2a`):
+
+- `streamqueue-existing-pr-template-compliance`: baseline 73% → with-context 99.3% (lift **+26.3**, up from +17).
+- `synthetic-pr-subtle-breaking-change-template-compliance`: baseline 60.3% → with-context 100% (lift **+39.7**, up from +20.7). Baseline still infers the contradiction at 15/16, but the tile now lifts almost entirely on the prescribed `Slight deviation` classification (3/18 → 18/18) and the drafted clarification (2.33/8 → 8/8) — the response shape, which is the tile's actual contribution.
+
 ### Fixed — Rubric: scope the mandatory consistency scan to fully-filled bodies
 
 Re-eval after #34 (run `019dd006-0f7b-70c1-92e2-4407e9f93f99`) showed the detection-mandatory fix landed dramatically on its target — `synthetic-pr-subtle-breaking-change` jumped from 51% to **100%** with-context, and the contradiction-detection criterion that had collapsed in #32 (89% → 32%) recovered to **100%**. Every criterion on that scenario hit 100%.

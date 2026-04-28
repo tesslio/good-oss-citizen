@@ -58,7 +58,7 @@ Select all that apply:
 Describe the problem and fix in 2–5 bullets:
 - Fixes token handling in the message bridge.
 - Keeps binary payloads out of prompt-visible text.
-- Replaces the legacy `messageBridge.rawCaption` export with `messageBridge.safeCaption`, which is a breaking change for plugins importing the old helper.
+- Removes the legacy `messageBridge.rawCaption` export in favor of `messageBridge.safeCaption`; plugins still calling the old symbol will need to update their imports.
 
 ## Security Impact (required)
 List security-sensitive behavior changes. If none, write `None`.
