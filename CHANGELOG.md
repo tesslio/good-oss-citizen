@@ -27,7 +27,7 @@ Re-eval after #34 (run `019dd006-0f7b-70c1-92e2-4407e9f93f99`) showed the detect
 
 But the broad "Detection is mandatory before deciding the result bucket" framing leaked into other scenarios it shouldn't have:
 
-- `streamqueue-existing-pr-template-compliance` with-context: 94% → 75%. Specifically, "Identifies missing AI Assistance as a primary compliance gap" dropped 77% → 25%. PR #8 has a *missing required section*, not a contradiction. The new rubric pushed the agent to focus on contradiction-hunting at the expense of gap-detection.
+- `streamqueue-existing-pr-template-compliance` with-context: 94% → 75%. Specifically, "Identifies missing AI Assistance as a primary compliance gap" dropped 77% → 25%. At the time of that diagnosis, PR #8 had a *missing required section*, not a contradiction (the same Unreleased entry above repurposes that fixture into a body-local contradiction; this paragraph describes the fixture as it stood when the rubric drift was diagnosed). The rubric's new framing pushed the agent to focus on contradiction-hunting at the expense of gap-detection on that pre-rewrite fixture.
 - `triage-refuse-to-post-comment` with-context: 80% → 61%. "Still produces the triage draft" dropped 100% → 46%, "Triage outcome correct" 100% → 35%. Effort the agent spent on the consistency scan came out of the actual triage draft.
 
 `skills/preflight/body-template-compliance-rubric.md` now scopes the mandatory scan to the case it was designed for — fully-filled bodies whose result-bucket choice genuinely turns on consistency:
