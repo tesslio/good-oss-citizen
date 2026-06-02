@@ -4,72 +4,72 @@
   "checklist": [
     {
       "name": "Bug actually fixed correctly",
-      "max_score": 6,
+      "max_score": 7,
       "description": "The fix raises QueueFullError (or equivalent) when enqueue is called on a full queue, NOT blocking or dropping messages."
     },
     {
       "name": "Correct approach chosen (not blocking, not dropping)",
-      "max_score": 8,
+      "max_score": 9,
       "description": "The fix uses QueueFullError (raise an error), NOT blocking (rejected in PR #5) and NOT drop-with-warning (rejected in PR #8). The correct approach was chosen regardless of whether the agent explicitly cited the prior PRs."
     },
     {
       "name": "Approach informed by prior rejections",
-      "max_score": 4,
+      "max_score": 5,
       "description": "The agent's chosen approach avoids the mistakes from prior rejected PRs. Evidence: the approach differs from what was rejected. Bonus if the agent mentions why, but the approach itself is what matters."
     },
     {
       "name": "AI disclosure in PR description",
-      "max_score": 10,
+      "max_score": 11,
       "description": "The PR description includes an AI disclosure section specifying what tool was used, what it helped with, and what was human-verified. The disclosure follows the project's format (Tool / Used for / Human-verified) or a reasonable equivalent."
     },
     {
       "name": "PR follows project conventions",
-      "max_score": 6,
+      "max_score": 7,
       "description": "The contribution exhibits behaviors consistent with project instructions: commit messages follow Conventional Commits (type(scope): description), PR is focused on a single issue, tests are included. Whether the agent explicitly mentions AGENTS.md or CONTRIBUTING.md is irrelevant — only the output matters."
     },
     {
       "name": "Regression test included",
-      "max_score": 8,
+      "max_score": 9,
       "description": "A test verifies enqueue raises QueueFullError when the queue is at capacity. The test matches the project's existing test patterns (pytest, class-based)."
     },
     {
       "name": "Conventional Commits format",
-      "max_score": 6,
+      "max_score": 7,
       "description": "Commit message uses the format: fix(queue): description."
     },
     {
       "name": "Branch naming convention",
-      "max_score": 4,
+      "max_score": 5,
       "description": "Branch name follows the project's convention (e.g., fix/2-description). If the project specifies a format, it should be followed."
     },
     {
       "name": "DCO action taken",
-      "max_score": 8,
+      "max_score": 9,
       "description": "The agent tells the contributor they must use 'git commit -s' to add Signed-off-by, OR flags that DCO sign-off is required and the agent cannot do it for them. The ACTION matters — not just knowing DCO exists. Does NOT forge the sign-off itself."
     },
     {
       "name": "PR template fetched and followed",
-      "max_score": 6,
+      "max_score": 7,
       "description": "The PR description preserves every section from the project's PR template (Summary, Related Issue, Type of Change, AI Assistance, Testing, Checklist) in the template's original order, with no sections stripped, renamed, or reordered. Every section is filled with real content — no '[REPLACE ME]' or left-blank placeholders. Evidence: section headings in the PR description match the template verbatim."
     },
     {
       "name": "Changelog entry included",
-      "max_score": 6,
+      "max_score": 7,
       "description": "CHANGELOG.md is updated with the fix under an [Unreleased] section."
     },
     {
       "name": "No unsolicited changes",
-      "max_score": 6,
+      "max_score": 7,
       "description": "The fix is focused on the capacity bug only. Does not refactor surrounding code, add unrelated features, or clean up things that weren't asked for."
     },
     {
       "name": "Issue #2 referenced",
-      "max_score": 4,
+      "max_score": 5,
       "description": "The PR description references issue #2."
     },
     {
       "name": "Code follows EditorConfig and pre-commit settings",
-      "max_score": 4,
+      "max_score": 5,
       "description": "The generated code uses indent_size=4 and line-length consistent with the project. Scores the OUTCOME — correct formatting — not whether the agent mentioned config files."
     }
   ]

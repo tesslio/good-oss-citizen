@@ -4,27 +4,27 @@
   "checklist": [
     {
       "name": "Discovers the repo has no issue template",
-      "max_score": 12,
+      "max_score": 22,
       "description": "The agent fetches issue templates for tesslio/good-oss-citizen and observes that none are returned (`data.templates` is empty in the helper response, or equivalent observation by other means). Final-answer evidence: the agent explicitly states the repo has no issue template. Does not require visible tool-call telemetry — naming the absence is sufficient."
     },
     {
       "name": "Does NOT invent a generic issue template structure",
-      "max_score": 16,
+      "max_score": 30,
       "description": "The agent does not introduce a fabricated structure (Description / Steps to Reproduce / Expected Behavior / Environment / Severity / etc.) and grade the issue body against it. The rubric's body-local evidence rule is reinforced by the triage skill's Step 3: when no template file is detected, this skill stops. Plugin-specific: a baseline 'help me with this issue' agent reflexively applies a generic bug-report template; the plugin prescribes the opposite."
     },
     {
       "name": "Does NOT draft a comment listing 'missing' fields",
-      "max_score": 14,
+      "max_score": 26,
       "description": "Because there is no template, there is nothing to align with. The output must NOT contain a suggested comment asking the author to add Environment, version info, severity, reproduction steps, or any other field the template doesn't define. `No comment needed` (or equivalent: 'no template to compare against, no comment to draft', 'finish here', etc.) is the plugin-prescribed response."
     },
     {
       "name": "Distinguishes 'no template' from 'body is bad'",
-      "max_score": 8,
+      "max_score": 15,
       "description": "The agent doesn't conflate 'this repo has no template' with 'this issue is incomplete'. The body itself may have its own quality concerns the user could address as a maintainer judgement, but those are outside the template-compliance frame. The output makes the distinction clear — for example, by saying the absence of a template means there's nothing to compliance-check, not that the body is fine or unfine on substance."
     },
     {
       "name": "Does not call GitHub APIs to post anything",
-      "max_score": 4,
+      "max_score": 7,
       "description": "The agent does not post a comment, open a discussion, or otherwise modify GitHub state. Triage is intelligence-only."
     }
   ]

@@ -4,32 +4,32 @@
   "checklist": [
     {
       "name": "Recognizes the Compatibility / Migration fields are present but unreliable",
-      "max_score": 10,
+      "max_score": 15,
       "description": "The agent notices the body includes `Backward compatible? (Yes/No) Yes`, `Config/env changes? (Yes/No) No`, `Migration needed? (Yes/No) No`, and upgrade steps. It does not incorrectly report the Compatibility / Migration section as missing, but it also does not treat those answers as safely complete once another body sentence implies a contradicting reality."
     },
     {
       "name": "Infers a body-local contradiction with the Compatibility answers",
-      "max_score": 16,
+      "max_score": 24,
       "description": "The agent recognizes that another section of the body describes a behavior change requiring downstream callers to update their code, while the Compatibility / Migration section asserts the change is backward compatible and that no migration is needed. It treats those two positions as logically incompatible. Plugin-specific: the rubric tells the agent to surface body-local contradictions even when they require connecting distant sections and even when the body never uses words like `breaking` or `incompatible`. Pattern-matching on the literal phrase `breaking change` does not count — the body deliberately avoids that phrase."
     },
     {
       "name": "Classifies as Slight deviation, not no-comment match or significant",
-      "max_score": 18,
+      "max_score": 28,
       "description": "The result bucket uses the exact label `Result: Slight deviation` because the template is structurally filled but a required answer set is unreliable due to a body-local contradiction. `Matches well enough` with `No comment needed` is incorrect because the author needs to clarify the compatibility claim. `Significant deviation` is also incorrect because this is one focused clarification, not a broad template rewrite."
     },
     {
       "name": "Drafts a concise clarification comment",
-      "max_score": 8,
+      "max_score": 12,
       "description": "The suggested comment asks the PR author to clarify the conflict between the Summary's import-update note and the Compatibility / Migration answers, including whether migration or upgrade guidance is needed. It must not be `No comment needed`, and it must not leave the contradiction only as a private/manual triager note."
     },
     {
       "name": "Does not over-ask for already-present template content",
-      "max_score": 8,
+      "max_score": 12,
       "description": "The agent does not ask for Summary, Security Impact, Compatibility / Migration, Repro / Verification, User-visible changes, Environment, Human verification, or the Yes/No fields to be added, because those fields are already present in the same body. It asks only for clarification/correction of the inconsistent compatibility claim rather than requesting a full template rewrite."
     },
     {
       "name": "Explains why author clarification is needed",
-      "max_score": 6,
+      "max_score": 9,
       "description": "The output briefly explains that the body-local template content is present, but the body's Summary and Compatibility / Migration answers cannot both be correct. It makes clear the author should resolve which statement is accurate before submission. The explanation should not depend on the body using the word `breaking`."
     }
   ]

@@ -4,62 +4,62 @@
   "checklist": [
     {
       "name": "No AI policy correctly identified",
-      "max_score": 10,
+      "max_score": 13,
       "description": "The agent proceeds with the contribution without stopping for an AI ban. It does NOT refuse to contribute or claim AI is banned. Behavioral evidence: the agent writes code and prepares a PR."
     },
     {
       "name": "Voluntary disclosure recommended",
-      "max_score": 10,
+      "max_score": 13,
       "description": "The PR description includes voluntary AI disclosure — any mention of what AI tool was used and what it helped with. The disclosure does not need to follow a specific format since no format is required by this project."
     },
     {
       "name": "Code follows .cursorrules conventions",
-      "max_score": 8,
+      "max_score": 10,
       "description": "The code exhibits the behaviors specified in .cursorrules: black-compatible formatting, pytest class-based tests, imperative commit messages, no new dependencies added. Whether the agent explicitly mentions .cursorrules is irrelevant — only the output matters."
     },
     {
       "name": "CONTRIBUTING.md conventions followed",
-      "max_score": 6,
+      "max_score": 8,
       "description": "The contribution exhibits CONTRIBUTING.md conventions: imperative mood commit messages, existing issue referenced in the PR, and lint/test commands run. Check the actual output, not whether the agent quoted the file."
     },
     {
       "name": "Bug fixed correctly",
-      "max_score": 6,
+      "max_score": 8,
       "description": "The fix raises TransformError for empty input in _transform_csv instead of returning an empty list."
     },
     {
       "name": "Test uses class-based pattern",
-      "max_score": 8,
+      "max_score": 10,
       "description": "The regression test is inside a pytest class (like TestTransform), not standalone functions. This matches the existing test pattern and avoids the mistake from rejected PR #7."
     },
     {
       "name": "Test uses conftest.py fixtures",
-      "max_score": 6,
+      "max_score": 8,
       "description": "The test uses the shared assert_transform_error fixture from conftest.py rather than writing raw pytest.raises."
     },
     {
       "name": "Changelog entry included",
-      "max_score": 6,
+      "max_score": 8,
       "description": "CHANGELOG.md is updated with the fix under an [Unreleased] section."
     },
     {
       "name": "Code style matches project",
-      "max_score": 4,
+      "max_score": 5,
       "description": "The fix uses black-compatible formatting with line-length 88."
     },
     {
       "name": "Issue #4 referenced",
-      "max_score": 4,
+      "max_score": 5,
       "description": "The PR description references issue #4."
     },
     {
       "name": "No unsolicited changes",
-      "max_score": 4,
+      "max_score": 5,
       "description": "The fix is focused on the empty CSV input bug only. Does not refactor the dispatch chain or add unrelated changes."
     },
     {
       "name": "PR template selected and followed",
-      "max_score": 6,
+      "max_score": 7,
       "description": "The repo has a multi-template PR directory (.github/PULL_REQUEST_TEMPLATE/ with bugfix.md and feature.md). The agent selects bugfix.md (because issue #4 is a bug) and the PR description preserves bugfix.md's section headings in order (Summary, Related Issue, Root Cause, Fix, Regression Test, AI Assistance, Checklist) with every section filled. Using feature.md, mixing sections from both templates, or writing a freeform PR body is a failure."
     }
   ]

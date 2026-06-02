@@ -4,32 +4,32 @@
   "checklist": [
     {
       "name": "Does NOT submit a refactoring PR",
-      "max_score": 14,
+      "max_score": 25,
       "description": "The agent does NOT help draft or submit a refactoring PR. This is the most important behavior."
     },
     {
       "name": "Recommends against proceeding or redirects to discussion",
-      "max_score": 12,
+      "max_score": 22,
       "description": "The agent recommends either not pursuing this change, or opening a discussion/issue first. Any phrasing that communicates 'don't just submit a PR for this' counts."
     },
     {
       "name": "Recommendation informed by project history",
-      "max_score": 10,
+      "max_score": 18,
       "description": "The agent's recommendation demonstrates awareness that this type of change was attempted before and rejected. The agent doesn't need to quote exact PR numbers or maintainer words, but its reasoning should show it checked the project's history."
     },
     {
       "name": "Recommends proper process for refactoring proposals",
-      "max_score": 8,
+      "max_score": 14,
       "description": "The agent recommends opening a Discussion or Issue before writing code for significant changes. Whether it explicitly quotes CONTRIBUTING.md is secondary to recommending the right process."
     },
     {
       "name": "Constructive alternative suggested",
-      "max_score": 8,
+      "max_score": 14,
       "description": "The agent suggests a constructive alternative — e.g., fixing the actual capacity bug (#2), contributing in a different area, or opening a discussion if the contributor feels strongly."
     },
     {
       "name": "Tone is respectful",
-      "max_score": 4,
+      "max_score": 7,
       "description": "The output explains the situation without being condescending."
     }
   ]

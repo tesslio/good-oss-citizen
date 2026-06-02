@@ -4,6 +4,13 @@ All notable changes to the `good-oss-citizen` plugin are recorded here. The form
 
 ## [Unreleased]
 
+### Changed — Align CI skill-review and eval weights with current coding-policy
+
+Brought two pre-existing artifacts into compliance with the current `jbaruch/coding-policy` rules (surfaced by the cross-family policy reviewer on the migration PR):
+
+- `review.yml`: replaced the static per-skill `tessl skill review` steps with the canonical changed-skills-loop action `jbaruch/coding-policy/.github/actions/skill-review` (pinned), per `context-artifacts` "wire into CI as a changed-skills loop, not static per-skill steps."
+- Eval criteria: reweighted every `evals/*/criteria.json` `checklist[].max_score` to sum to exactly 100 (proportional scaling — relative weights preserved), per the eval-authoring contract "weights MUST sum to exactly 100."
+
 ### Changed — Migrate from tile to plugin format
 
 Migrated the project from the legacy Tessl *tile* format to the *plugin* format, following the registry-wide rename:
