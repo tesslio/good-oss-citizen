@@ -46,7 +46,7 @@ timeout-minutes: 15
 
 network:
   # `defaults` for the Codex engine doesn't include GitHub or ChatGPT
-  # telemetry hosts, so `tessl install` (which fetches the plugin from the
+  # telemetry hosts, so `tessl install` (which fetches the tile from the
   # registry over GitHub) and the engine's own UI/telemetry calls are
   # blocked. Both must be explicit. `github` and `threat-detection` are
   # gh-aw ecosystem identifiers (preferred over enumerating individual
