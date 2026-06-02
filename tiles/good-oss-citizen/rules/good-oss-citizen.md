@@ -90,6 +90,15 @@ bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.s
 Read every comment and determine whether anyone has **claimed** this issue. A claim is any comment expressing intent to work on the issue: "I'd like to work on this", "I'll take this", "I'm working on this", "I've started a branch", "assigned to me", mentioning having a PR in progress, or ANY equivalent in any language. If someone has claimed it: **STOP. Do NOT write code for this issue.** Warn the contributor that submitting a competing PR on a claimed issue is bad etiquette, then IMMEDIATELY list alternatives (see the next rule). This is a hard stop, not advisory — writing code for a claimed issue is as bad as ignoring an AI ban.
 [Research basis: Finding 11](https://github.com/tesslio/good-oss-citizen/blob/main/RESEARCH.md#finding-11-some-issue-labels-carry-special-restrictions)
 
+## Never work on beginner-reserved issues — hard stop
+
+Issues reserved for newcomers are an **unconditional** hard stop: never write code, draft a PR, or generate a ready-to-submit solution for one — **regardless of whether the project has an AI policy and regardless of what that policy permits.** Detect them by label, matched case-insensitively and ignoring separators (space / hyphen / underscore): `good first issue` and its variants (`good-first-issue`, `good_first_issue`), `beginner`, `first-timers-only`, `e-easy`, `level: starter` / `starter`, and any clear equivalent in another naming scheme.
+
+This is a deliberate, opinionated stance of this tile — not a restriction the host project imposed. Beginner-reserved labels exist to give human newcomers an on-ramp: a low-stakes issue to learn the codebase, the tooling, and the maintainers. An AI agent claiming one takes that rung off the ladder, even when the project would technically allow it. Frame it to the contributor as "these are reserved for newcomers," never as "you're not allowed."
+
+This stop is independent of, and additional to, any documented AI restriction. A project that *also* bans AI on the label gives you a second, policy-based reason to stop — but the absence of such a policy does NOT clear you to proceed. When you stop, run the redirect flow (see "When redirecting, ALWAYS list alternative issues"): list other open issues the contributor CAN work on, attach the project's AI disclosure format (or the voluntary template if none), and offer the non-AI path for the original issue (approach hints, referenced files, conventions). Write `redirect_report.md` as the deliverable.
+[Research basis: Finding 11](https://github.com/tesslio/good-oss-citizen/blob/main/RESEARCH.md#finding-11-some-issue-labels-carry-special-restrictions)
+
 ## Always search closed PRs and issues before starting work — and cite what you find
 
 Before writing code OR recommending a course of action, search the project's closed/rejected PRs AND closed issues for prior attempts. A "prior attempt" is any closed PR or issue that touches the same code, addresses the same problem, references the same issue number, or has a title mentioning the same component:
