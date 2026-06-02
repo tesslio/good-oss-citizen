@@ -1,8 +1,18 @@
 # Changelog
 
-All notable changes to the `good-oss-citizen` tile are recorded here. The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the tile follows semver via the `tesslio/patch-version-publish@v1` GitHub Action.
+All notable changes to the `good-oss-citizen` plugin are recorded here. The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the plugin follows semver via the `tesslio/patch-version-publish@v1` GitHub Action.
 
 ## [Unreleased]
+
+### Changed — Migrate from tile to plugin format
+
+Migrated the project from the legacy Tessl *tile* format to the *plugin* format, following the registry-wide rename:
+
+- Manifest: replaced `tile.json` with `.tessl-plugin/plugin.json` (generated via `tessl plugin migrate`; `plugin.json` is now the authoritative manifest).
+- Layout: renamed the `tiles/good-oss-citizen/` source tree to `plugins/good-oss-citizen/`; repointed the root `README.md` symlink accordingly.
+- Runtime paths: updated the helper-script install path referenced throughout the rules and skills from `.tessl/tiles/tessl-labs/good-oss-citizen/...` to `.tessl/plugins/tessl-labs/good-oss-citizen/...` to match where the current CLI installs plugins. This is a functional change — consumers on the new CLI will find `github.sh` under `.tessl/plugins/`.
+- CI: updated `publish.yml`, `test.yml`, and `review.yml` path filters and step paths from `tiles/` to `plugins/`.
+- Terminology: updated user-facing and developer-facing prose ("tile" → "plugin") in the README, preflight references, helper-script comments, research notes, and eval criteria. Dated historical changelog entries below are left intact as records of the time they describe.
 
 ### Changed — Tighten two low-lift template-compliance evals
 

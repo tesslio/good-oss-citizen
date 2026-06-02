@@ -28,7 +28,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT_DIR = REPO_ROOT / "tiles" / "good-oss-citizen" / "skills" / "recon" / "scripts" / "bash"
+SCRIPT_DIR = REPO_ROOT / "plugins" / "good-oss-citizen" / "skills" / "recon" / "scripts" / "bash"
 GITHUB_SH = SCRIPT_DIR / "github.sh"
 sys.path.insert(0, str(SCRIPT_DIR))
 from _templates import issue_template_dir_paths  # noqa: E402

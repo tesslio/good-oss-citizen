@@ -1,1 +1,1 @@
-tiles/good-oss-citizen/README.md
+plugins/good-oss-citizen/README.md

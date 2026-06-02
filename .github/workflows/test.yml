@@ -10,20 +10,20 @@ on:
     branches:
       - main
     paths:
-      - 'tiles/good-oss-citizen/skills/recon/scripts/bash/**'
-      - 'tiles/good-oss-citizen/evals/**'
-      - 'tiles/good-oss-citizen/rules/**'
-      - 'tiles/good-oss-citizen/skills/**'
+      - 'plugins/good-oss-citizen/skills/recon/scripts/bash/**'
+      - 'plugins/good-oss-citizen/evals/**'
+      - 'plugins/good-oss-citizen/rules/**'
+      - 'plugins/good-oss-citizen/skills/**'
       - 'tests/**'
       - '.github/workflows/test.yml'
   push:
     branches:
       - main
     paths:
-      - 'tiles/good-oss-citizen/skills/recon/scripts/bash/**'
-      - 'tiles/good-oss-citizen/evals/**'
-      - 'tiles/good-oss-citizen/rules/**'
-      - 'tiles/good-oss-citizen/skills/**'
+      - 'plugins/good-oss-citizen/skills/recon/scripts/bash/**'
+      - 'plugins/good-oss-citizen/evals/**'
+      - 'plugins/good-oss-citizen/rules/**'
+      - 'plugins/good-oss-citizen/skills/**'
       - 'tests/**'
       - '.github/workflows/test.yml'
 

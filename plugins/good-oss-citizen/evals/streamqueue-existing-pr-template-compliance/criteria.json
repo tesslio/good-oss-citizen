@@ -1,0 +1,46 @@
+{
+  "context": "Tests detection depth on the body / template compliance rubric for an already-existing PULL REQUEST. Target: good-oss-citizen/demo-streamqueue PR #8. The repo has a single PR template at .github/PULL_REQUEST_TEMPLATE.md with sections Summary, Related Issue, Type of Change, AI Assistance, Testing, Checklist. PR #8 fills every required section, including AI Assistance as `Tool: None`, `Used for: N/A`, `Human-verified: Yes — wrote and reviewed every line manually`. However, the same body ends with a `🤖 Generated with [Claude Code]` line and a `Co-Authored-By: Claude <noreply@anthropic.com>` trailer — a body-local contradiction that makes the AI Assistance answer unreliable. The plugin-prescribed outcome is `Slight deviation` (template structurally complete but a required answer is unreliable due to a body-local contradiction) plus a focused comment asking the author to reconcile the AI Assistance declaration with the trailer. Baseline agents tend to either skim past the trailer, accept the body as compliant, or produce a long generic template request instead of a focused clarification. 'Drafts a comment' and 'does not post' are bled by the task language and have been removed; what remains tests plugin-specific behaviors.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Uses template-compliance flow for existing PR body",
+      "max_score": 8,
+      "description": "The agent treats the task as checking an already-existing PR body against the repo's PR template, not as preparing a new PR, reviewing code correctness, or editing template files. Strong evidence is visible in the final answer when it applies template-compliance concepts and references PR #8; do not require hidden tool-call or activation telemetry."
+    },
+    {
+      "name": "Fetches PR template and existing PR body",
+      "max_score": 12,
+      "description": "The final answer or visible transcript shows the agent used both the repo's PR template and the existing PR body for #8. Strong final-answer evidence includes naming the PR template's sections/items and accurately citing the body's populated content. If tool-call evidence is visible, ideal commands are `github.sh templates-pr good-oss-citizen/demo-streamqueue` and `github.sh body good-oss-citizen/demo-streamqueue 8`, but do not require hidden tool-call telemetry. This specifically exercises the new `body` command's pull_request classification path."
+    },
+    {
+      "name": "Selects .github/PULL_REQUEST_TEMPLATE.md",
+      "max_score": 6,
+      "description": "The agent compares PR #8 against `.github/PULL_REQUEST_TEMPLATE.md`. It does not use issue templates, invent a PR structure, or ignore the template because the PR is already closed."
+    },
+    {
+      "name": "Detects the AI Assistance contradiction",
+      "max_score": 22,
+      "description": "The agent identifies that the body's AI Assistance section declares `Tool: None` / `Human-verified: Yes — wrote and reviewed every line manually`, while the same body ends with a Claude Code attribution and a `Co-Authored-By: Claude` trailer. It frames this as a body-local contradiction that makes the AI disclosure answer unreliable. Plugin-specific: baseline agents may notice the trailer but accept the body as compliant or treat the trailer as boilerplate; the rubric prescribes flagging the inconsistency as a required-answer-unreliable case."
+    },
+    {
+      "name": "Classifies as Slight deviation, not match or significant",
+      "max_score": 10,
+      "description": "Reports `Result: Slight deviation` because the body is structurally complete but a required answer is unreliable due to a body-local contradiction. `Matches well enough` is wrong because the contradiction must be reconciled. `Significant deviation` is also wrong because this is one focused clarification, not a broad template rewrite. Plugin-specific: the rubric's bucket vocabulary."
+    },
+    {
+      "name": "Drafts a focused clarification comment, not a generic template request",
+      "max_score": 12,
+      "description": "The suggested comment asks the PR author to reconcile the AI Assistance answer with the Claude Code attribution / `Co-Authored-By` trailer (or to remove whichever does not reflect actual usage). It is one focused ask, not a long nit list of unrelated template items, and not `No comment needed`. Plugin-specific: rubric's 'Slight deviation' guidance to draft a concise clarification rather than a full-template rewrite."
+    },
+    {
+      "name": "Does not over-list nits or unrelated template items",
+      "max_score": 6,
+      "description": "The agent does not produce a long enumeration of every checked/unchecked checkbox or unrelated template detail. It surfaces the contradiction and stays focused. Plugin-specific: the rubric tells the agent to ask author to reconcile rather than enumerate; baseline agents reflexively itemize."
+    },
+    {
+      "name": "Does not ask for information already present",
+      "max_score": 4,
+      "description": "Does not ask the author to add Summary, Related Issue, Type of Change, AI Assistance, Testing, or Checklist headings generically — those are already populated. The ask is targeted at the inconsistency only."
+    }
+  ]
+}

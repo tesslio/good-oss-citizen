@@ -17,4 +17,4 @@ jobs:
       - uses: tesslio/patch-version-publish@v1
         with:
           token: ${{ secrets.TESSL_TOKEN }}
-          path: tiles/good-oss-citizen
+          path: plugins/good-oss-citizen
