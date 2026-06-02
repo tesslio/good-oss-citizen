@@ -18,7 +18,7 @@ bash .tessl/tiles/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.s
 Check for:
 - Is it assigned to someone? If yes, warn — competing PRs are bad etiquette.
 - Has someone commented claiming it ("I'd like to work on this", "I'll take this")? Same problem — warn and suggest alternatives.
-- Is it labeled "good first issue"? Check AI_POLICY.md — some projects forbid AI on these.
+- Is it labeled `good first issue` or an equivalent beginner-reserved label (`good-first-issue`, `good_first_issue`, `beginner`, `first-timers-only`, `e-easy`, `level: starter`)? **Unconditional hard stop** — do NOT write code or draft a PR, regardless of the project's AI policy (this stands even when no AI policy exists). These are reserved as on-ramps for human newcomers; redirect instead (see "When redirecting away from an issue" below). See the rule "Never work on beginner-reserved issues — hard stop."
 - Is it labeled internal, blocked, or pending design?
 
 **If the issue is claimed or restricted, immediately list alternatives:**
@@ -166,7 +166,7 @@ Present each open issue with its number, title, and any restrictions (assignment
 **Step B — For each viable alternative, attach the AI disclosure format:**
 If `AI_POLICY.md` defines a disclosure template, copy-paste it verbatim so the contributor has it ready. Example handoff: "For your PR, you'll need this section:" followed by the exact template from the policy file. If no policy exists, attach the voluntary disclosure template instead.
 
-**Step C — If the restriction is "no AI on this issue" (e.g., good-first-issue):**
+**Step C — If the issue is a beginner-reserved label (unconditional — `good first issue` and equivalents) or the project documents a "no AI on this issue" restriction:**
 Help the contributor succeed WITHOUT AI on that specific issue:
 - Quote any approach hints from the issue description (e.g., "see the pattern in env.go")
 - Point to specific code files or functions the issue references

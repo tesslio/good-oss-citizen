@@ -4,6 +4,16 @@ All notable changes to the `good-oss-citizen` tile are recorded here. The format
 
 ## [Unreleased]
 
+### Changed — Treat beginner-reserved issue labels as an unconditional hard stop
+
+The tile now declines to write code or draft a PR for any issue labeled `good first issue` (or an equivalent newcomer-reserved label: `good-first-issue`, `good_first_issue`, `beginner`, `first-timers-only`, `e-easy`, `level: starter`) **regardless of the target project's AI policy** — previously it only redirected when the project's AI policy explicitly restricted AI on the label. This is a deliberate, opinionated stance: these labels exist to give human newcomers an on-ramp, and an AI agent claiming one defeats that purpose even when the project would technically allow it ([#47](https://github.com/tesslio/good-oss-citizen/issues/47)).
+
+- `rules/good-oss-citizen.md`: new "Never work on beginner-reserved issues — hard stop" rule stating the unconditional stance and the reasoning (the "why" so it isn't worked around).
+- `skills/recon/SKILL.md`: Step 3 now hard-stops on a beginner-reserved label *before* the policy-conditional label check; Step 2's conditional-restriction examples no longer present `good first issue` as merely policy-driven.
+- `skills/propose/SKILL.md`: the Step 1 metadata check and the Step 6 redirect path treat the label as an unconditional stop rather than an `AI_POLICY.md`-dependent one.
+- `triage` needs no change — it reviews already-open issue/PR bodies and never selects or implements an issue, so the always-on rule covers it.
+- New eval `dataweave-good-first-issue-no-policy`: a project with **no** AI policy and a `good first issue` (demo-dataweave #8) — the agent must still decline and redirect to AI-workable alternatives (#4, #9, #10). The existing `taskrunner-good-first-issue-trap` keeps covering the policy-backed path; this scenario isolates the unconditional behavior, where baseline would happily write the fix.
+
 ### Changed — Tighten two low-lift template-compliance evals
 
 Post-merge 3-run eval after #39 (run `019dd134-b762-7619-bb00-25ee15641dab`) flagged two scenarios where baseline already cleared 75% and the tile's lift was driven by narrow format details rather than the rubric's core prescriptions:
