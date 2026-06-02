@@ -140,6 +140,10 @@ Local-file scenarios inline their fixture content directly in `task.md` rather t
 
 The OpenClaw fixture tree itself was already removed from PR #22's rework; these two synthetic-fixture filenames were the last remaining artefact of that source-of-inspiration name.
 
+## [1.1.1 — 1.1.8] — 2026-04-26 / 2026-04-27
+
+`tesslio/patch-version-publish@v1` auto-bumps a patch on every merge to `main` but doesn't write per-version CHANGELOG sections. The work below shipped as patches between 1.1.0 and 1.1.8 — collected here as a range rather than guessing which entry landed in which patch. Headline storyline: ship the `triage` skill (1.1.3), rework the eval suite for honest signal (1.1.4–1.1.5), then iterate on the rubric three times to land the "filled field + distant contradiction" routing (1.1.6 → 1.1.7 → 1.1.8).
+
 ## [1.1.0] — 2026-04-26
 
 ### Changed — github.sh emits JSON envelopes (closes #13)
