@@ -1,3 +1,8 @@
+---
+alwaysApply: true
+description: Always-on guardrails for AI agents contributing to open source — AI disclosure, claimed-issue and beginner-issue hard stops, AI-ban respect, template compliance, minimal diffs, DCO handling
+---
+
 # Good OSS Citizen — Rules
 
 These rules are always active when contributing to open source projects. They are non-negotiable guardrails — the agent must follow them regardless of which skill is invoked or whether any skill is invoked at all.

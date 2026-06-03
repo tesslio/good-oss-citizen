@@ -27,6 +27,21 @@ The plugin has three layers:
 - **Skills** (on-demand, ~5.8k tokens) — the scripture. Detailed workflow guidance for recon (scan the repo before writing code), propose (pick the right venue), preflight (pre-submission checklist, including a body-vs-template compliance rubric for final verification), and triage (check an already-open issue or PR body against the host repo's templates and draft a polite suggested comment for human review).
 - **Scripts** (23 commands) — the rituals. Deterministic steps that fetch structured data from the GitHub API: policy files, issue comments, commit conventions, prior rejected PRs, CODEOWNERS, legal requirements, issue/PR templates, and already-open issue/PR bodies. Each command emits a JSON envelope with the fields `command`, `ok`, `data`, `warnings`, `errors` so the model parses fields, not prose. Scripts fetch, the model interprets.
 
+## Rules
+
+| Rule | Summary |
+|------|---------|
+| [good-oss-citizen](rules/good-oss-citizen.md) | Always-on guardrails: AI disclosure, claimed-issue and beginner-issue hard stops, AI-ban respect, template compliance, minimal diffs, DCO handling |
+
+## Skills
+
+| Skill | Description |
+|-------|-------------|
+| [recon](skills/recon/SKILL.md) | Scan the target repo before writing code — policies, conventions, prior PRs, issue claims |
+| [propose](skills/propose/SKILL.md) | Pick the right venue (issue, discussion, or PR) for the contribution |
+| [preflight](skills/preflight/SKILL.md) | Pre-submission checklist, including a body-vs-template compliance rubric |
+| [triage](skills/triage/SKILL.md) | Check an already-open issue or PR body against the repo's templates; draft a suggested comment for human review |
+
 ## Research
 
 Every rule and skill instruction traces back to documented failure modes from real OSS projects. See [RESEARCH.md](https://github.com/tesslio/good-oss-citizen/blob/main/RESEARCH.md) for all 16 findings with sources.
