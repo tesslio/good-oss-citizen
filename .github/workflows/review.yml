@@ -8,8 +8,11 @@ on:
   pull_request:
     branches:
       - main
+    # Match the whole skill tree, not just SKILL.md — a skill's scripts,
+    # reference files, and rubrics are review surface too, and the
+    # changed-skills loop below must run when any of them change.
     paths:
-      - 'plugins/**/SKILL.md'
+      - 'plugins/**/skills/**'
 
 jobs:
   review:
