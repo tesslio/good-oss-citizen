@@ -4,6 +4,12 @@ All notable changes to the `good-oss-citizen` tile are recorded here. The format
 
 ## [Unreleased]
 
+### Fixed — README usage workflow and blog links
+
+The tile README now includes a concrete contribution workflow showing when to run `recon`, `propose`, `preflight`, and `triage`, so first-time users have an example path instead of only installation instructions.
+
+The two blog links were also updated from their old JFrog URLs to the current Tessl blog URLs.
+
 ### Changed — Tighten two low-lift template-compliance evals
 
 Post-merge 3-run eval after #39 (run `019dd134-b762-7619-bb00-25ee15641dab`) flagged two scenarios where baseline already cleared 75% and the tile's lift was driven by narrow format details rather than the rubric's core prescriptions:
