@@ -12,6 +12,18 @@ tessl install tessl-labs/good-oss-citizen
 
 Install on your fork of whatever OSS project you're contributing to. The tile loads only in that project's context — switch to your own codebase and it isn't there.
 
+## Example workflow
+
+Use the tile before the agent starts writing code. A typical contribution flow looks like this:
+
+1. Fork and clone the upstream project you want to contribute to.
+2. Install the tile from inside that fork with `tessl install tessl-labs/good-oss-citizen`.
+3. Ask the agent to inspect the target repository and issue first. The `recon` skill checks contribution docs, AI policy, labels, comments, related PRs, DCO/CLA requirements, templates, and local conventions before any code is written.
+4. If the issue is open for AI-assisted work, let `propose` choose the right venue and approach. If the issue is claimed, restricted, or already has a competing PR, the tile redirects to safer alternatives instead of opening a duplicate PR.
+5. After the code change is ready, run `preflight` to check disclosure, template compliance, tests, legal requirements, branch/commit conventions, and leftover agent artifacts before the human contributor submits.
+
+For already-open issues or PRs, use `triage` to compare the body against the repository's templates and draft a suggested comment for human review.
+
 ## What it does
 
 AI agents write working code but ignore everything around it: contribution guidelines, AI policies, prior rejected PRs, claimed issues, DCO requirements, changelog updates. This tile teaches the agent to check all of that before submitting.
@@ -33,8 +45,8 @@ Every rule and skill instruction traces back to documented failure modes from re
 
 ## Blog posts
 
-- [Our AI is the bright kid with no manners](https://jfrog.com/blog/our-ai-is-the-bright-kid-with-no-manners/) — why AI PRs fail and what the tile does about it
-- [Our AI is the bright kid with no manners, part 2](https://jfrog.com/blog/our-ai-is-the-bright-kid-with-no-manners-part-2/) — how I built and tested the tile
+- [Our AI is the bright kid with no manners](https://tessl.io/blog/our-ai-is-the-bright-kid-with-no-manners-part-1/) — why AI PRs fail and what the tile does about it
+- [Our AI is the bright kid with no manners, part 2](https://tessl.io/blog/our-ai-is-the-bright-kid-with-no-manners-part-2/) — how I built and tested the tile
 
 ## For maintainers
 
