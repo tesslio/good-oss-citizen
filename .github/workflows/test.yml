@@ -50,3 +50,13 @@ jobs:
             --issue-number 13 \
             --pr-number 12 \
             --file-path README.md
+
+  contribution-declaration:
+    name: contribution-gate detector
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run contribution-declaration unit test
+        # Offline, stdlib-only — exercises the detector the install-gate
+        # skill vendors into consumer repos against fixed PR-body fixtures.
+        run: python3 tests/test_contribution_declaration.py

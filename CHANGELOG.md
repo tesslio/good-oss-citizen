@@ -4,6 +4,14 @@ All notable changes to the `good-oss-citizen` plugin are recorded here. The form
 
 ## [Unreleased]
 
+### Added — Maintainer-installable contribution gate (`install-gate` skill)
+
+Closes #48 (supersedes #45). A turn-key way for maintainers to enforce AI-use disclosure at PR time, instead of only mentioning the plugin in prose. The new `install-gate` skill scaffolds, into a consumer repo, a `pull_request_target` GitHub Actions check that fails any PR whose description lacks a contribution declaration — an `AI Disclosure` section or an explicit "written without AI assistance" box — posts a sticky comment with the fix, and works on fork PRs. It also vendors a stdlib-only detector (`skills/install-gate/templates/check_contribution_declaration.py`), adds a wired-up PR template (only when the repo has none), and ensures the `tessl.json` dependency entry.
+
+- The detector's decisional logic is covered by offline unit tests (`tests/test_contribution_declaration.py`, 15 classification cases + CLI/input/error), wired into the `Smoke tests` workflow as a `contribution-gate detector` job. The changed-skills review loop (`review.yml`) already covers the new skill, so no per-skill review step is added.
+- **Honest framing (documented in the README and PR body):** the gate enforces an *outcome* (AI use disclosed, or declared absent) on the unbypassable PR side — it does not, and cannot, prove the plugin actually ran, since the plugin is designed to make AI contributions indistinguishable from careful human ones. Client-side git hooks are deliberately not shipped: they can't be forced on clone and are bypassable.
+- No behavioral plugin eval is added for the scaffolding skill: its output is git/gh side effects, not a workspace artifact, so a live eval would create destructive branches/PRs on the shared demo-repo org.
+
 ### Changed — Align CI skill-review and eval weights with current coding-policy
 
 Brought two pre-existing artifacts into compliance with the current `jbaruch/coding-policy` rules (surfaced by the cross-family policy reviewer on the migration PR):
