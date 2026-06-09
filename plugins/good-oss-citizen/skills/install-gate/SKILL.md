@@ -43,7 +43,7 @@ If either `.github/workflows/contribution-gate.yml` or `.github/scripts/check_co
 .tessl/plugins/tessl-labs/good-oss-citizen/skills/install-gate/scaffold.sh
 ```
 
-Writes `.github/workflows/contribution-gate.yml` and the vendored `.github/scripts/check_contribution_declaration.py`, adds `.github/PULL_REQUEST_TEMPLATE.md` only when the repo has no PR template anywhere GitHub looks (otherwise it leaves the existing one and emits a warning), and ensures `tessl.json` declares the `tessl-labs/good-oss-citizen` dependency (created if absent, added if missing, never overwriting an existing pin). Emits a JSON summary with the written paths, the `tessl_json` state, and a `warnings` array. Remember any warnings for Step 7. Proceed immediately to Step 5.
+Writes `.github/workflows/contribution-gate.yml` and the vendored `.github/scripts/check_contribution_declaration.py`, adds `.github/PULL_REQUEST_TEMPLATE.md` only when the repo has no PR template anywhere GitHub looks (otherwise it leaves the existing one and emits a warning), and ensures `tessl.json` declares the `tessl-labs/good-oss-citizen` dependency (created if absent, added if missing, never overwriting an existing pin). Atomic: it validates templates, version, and `tessl.json` parseability before writing anything, and rolls back every file it created (restoring `tessl.json`) if a later step fails — so a failed run never leaves a partial install for Step 2 to refuse on re-run. Emits a JSON summary with the written paths, the `tessl_json` state, and a `warnings` array; exits non-zero with a stderr diagnostic on failure. Remember any warnings for Step 7. Proceed immediately to Step 5.
 
 ## Step 5 — Commit
 
