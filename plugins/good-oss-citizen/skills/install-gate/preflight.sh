@@ -113,6 +113,18 @@ check_branch_not_remote() {
   fi
 }
 
+# tessl.json is the one install target that can already exist and is rewritten
+# by scaffold.sh. If it carries uncommitted edits, the gate-install commit
+# would bundle them with the dependency change, breaking the one-logical-change
+# rule (rules/commit-conventions.md). Refuse until it is clean.
+check_target_clean() {
+  [[ -f tessl.json ]] || return 0
+  if ! git diff --quiet -- tessl.json 2>/dev/null \
+     || ! git diff --cached --quiet -- tessl.json 2>/dev/null; then
+    push_failure "tessl-json-clean" "tessl.json has uncommitted changes — commit or stash them before installing the gate so they aren't bundled into the gate-install commit"
+  fi
+}
+
 main() {
   check_in_git_worktree
   check_python3
@@ -124,6 +136,7 @@ main() {
   if git rev-parse --git-dir >/dev/null 2>&1; then
     check_origin_remote
     check_branch_not_local
+    check_target_clean
     if git remote get-url origin >/dev/null 2>&1; then
       check_branch_not_remote
     fi

@@ -249,6 +249,48 @@ def test_preflight_missing_templates(failures: list[str]) -> None:
             fail(failures, "preflight_missing_templates: ok should be false")
 
 
+def test_preflight_flags_dirty_tessl_json(failures: list[str]) -> None:
+    """A pre-existing tessl.json with uncommitted edits must fail preflight, so
+    those edits aren't bundled into the gate-install commit."""
+    with tempfile.TemporaryDirectory() as d:
+        repo = make_consumer(Path(d))
+        (repo / "tessl.json").write_text(
+            json.dumps({"name": "proj", "dependencies": {}}) + "\n", encoding="utf-8")
+        git(repo, "add", "tessl.json")
+        git(repo, "commit", "-qm", "add tessl.json")
+        # Now leave an uncommitted edit in it.
+        (repo / "tessl.json").write_text(
+            json.dumps({"name": "proj", "dependencies": {}, "wip": True}) + "\n", encoding="utf-8")
+        rc, out, _ = run_script(repo, "preflight.sh")
+        try:
+            data = json.loads(out)
+        except json.JSONDecodeError:
+            return fail(failures, f"preflight_flags_dirty_tessl_json: stdout not JSON: {out[:200]!r}")
+        if "tessl-json-clean" not in {f["check"] for f in data["failures"]}:
+            fail(failures, "preflight_flags_dirty_tessl_json: dirty tessl.json not flagged")
+        if rc == 0:
+            fail(failures, "preflight_flags_dirty_tessl_json: expected non-zero exit")
+
+
+def test_commit_excludes_unrelated_staged(failures: list[str]) -> None:
+    """commit.sh must commit only the gate files, never unrelated changes the
+    consumer had staged in the index."""
+    with tempfile.TemporaryDirectory() as d:
+        repo = make_consumer(Path(d))
+        on_branch(repo)
+        run_script(repo, "scaffold.sh")
+        (repo / "unrelated.txt").write_text("not part of the gate\n", encoding="utf-8")
+        git(repo, "add", "unrelated.txt")
+        rc, _, err = run_script(repo, "commit.sh")
+        if rc != 0:
+            return fail(failures, f"commit_excludes_unrelated_staged: exit {rc}, stderr={err[:200]}")
+        committed = git(repo, "show", "--name-only", "--format=", "HEAD").stdout
+        if "unrelated.txt" in committed:
+            fail(failures, "commit_excludes_unrelated_staged: unrelated staged file leaked into the commit")
+        if "tessl.json" not in committed:
+            fail(failures, "commit_excludes_unrelated_staged: gate files missing from the commit")
+
+
 def test_branch_from_origin_default(failures: list[str]) -> None:
     with tempfile.TemporaryDirectory() as d:
         root = Path(d)
@@ -334,7 +376,9 @@ TESTS = [
     test_push_flow,
     test_preflight_missing_templates,
     test_preflight_flags_unreachable_remote,
+    test_preflight_flags_dirty_tessl_json,
     test_preflight_emits_json_without_python3,
+    test_commit_excludes_unrelated_staged,
     test_branch_from_origin_default,
 ]
 

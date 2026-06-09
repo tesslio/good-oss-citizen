@@ -63,12 +63,16 @@ main() {
 
   git add "${files[@]}"
 
-  if git diff --cached --quiet; then
+  # Scope both the no-op check and the commit to exactly the gate files via
+  # pathspec, so any unrelated changes the consumer had staged in the index are
+  # never folded into the gate-install commit (rules/commit-conventions.md
+  # one-logical-change).
+  if git diff --cached --quiet -- "${files[@]}"; then
     printf '{"state": "no-op", "commit": "%s"}\n' "$(git rev-parse HEAD)"
     return 0
   fi
 
-  if ! git commit -m "$COMMIT_MSG" >&2; then
+  if ! git commit -m "$COMMIT_MSG" -- "${files[@]}" >&2; then
     echo "error: 'git commit' failed — if a pre-commit hook rejected the change, fix the hook's finding and re-run (do NOT add --no-verify)" >&2
     exit 1
   fi
