@@ -119,9 +119,12 @@ check_branch_not_remote() {
 # rule (rules/commit-conventions.md). Refuse until it is clean.
 check_target_clean() {
   [[ -f tessl.json ]] || return 0
-  if ! git diff --quiet -- tessl.json 2>/dev/null \
-     || ! git diff --cached --quiet -- tessl.json 2>/dev/null; then
-    push_failure "tessl-json-clean" "tessl.json has uncommitted changes — commit or stash them before installing the gate so they aren't bundled into the gate-install commit"
+  # `git status --porcelain` catches untracked (??), modified, and staged
+  # states alike — a pre-existing tessl.json in any of them would be folded
+  # into the gate-install commit by scaffold + commit. A plain `git diff`
+  # would miss the untracked case.
+  if [[ -n "$(git status --porcelain -- tessl.json 2>/dev/null)" ]]; then
+    push_failure "tessl-json-clean" "tessl.json exists but is not committed-clean (untracked or has uncommitted changes) — commit or stash it before installing the gate so it isn't bundled into the gate-install commit"
   fi
 }
 

@@ -272,6 +272,25 @@ def test_preflight_flags_dirty_tessl_json(failures: list[str]) -> None:
             fail(failures, "preflight_flags_dirty_tessl_json: expected non-zero exit")
 
 
+def test_preflight_flags_untracked_tessl_json(failures: list[str]) -> None:
+    """An untracked pre-existing tessl.json must also fail preflight — `git diff`
+    alone would miss it, letting it be bundled into the gate-install commit."""
+    with tempfile.TemporaryDirectory() as d:
+        repo = make_consumer(Path(d))
+        (repo / "tessl.json").write_text(
+            json.dumps({"name": "proj", "dependencies": {}}) + "\n", encoding="utf-8")
+        # Deliberately do NOT `git add` it — it stays untracked.
+        rc, out, _ = run_script(repo, "preflight.sh")
+        try:
+            data = json.loads(out)
+        except json.JSONDecodeError:
+            return fail(failures, f"preflight_flags_untracked_tessl_json: stdout not JSON: {out[:200]!r}")
+        if "tessl-json-clean" not in {f["check"] for f in data["failures"]}:
+            fail(failures, "preflight_flags_untracked_tessl_json: untracked tessl.json not flagged")
+        if rc == 0:
+            fail(failures, "preflight_flags_untracked_tessl_json: expected non-zero exit")
+
+
 def test_commit_excludes_unrelated_staged(failures: list[str]) -> None:
     """commit.sh must commit only the gate files, never unrelated changes the
     consumer had staged in the index."""
@@ -377,6 +396,7 @@ TESTS = [
     test_preflight_missing_templates,
     test_preflight_flags_unreachable_remote,
     test_preflight_flags_dirty_tessl_json,
+    test_preflight_flags_untracked_tessl_json,
     test_preflight_emits_json_without_python3,
     test_commit_excludes_unrelated_staged,
     test_branch_from_origin_default,

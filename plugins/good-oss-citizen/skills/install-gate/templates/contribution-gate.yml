@@ -25,6 +25,9 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  # PR comments are posted through the issues endpoint, so the sticky-comment
+  # API calls below need issues: write alongside pull-requests: write.
+  issues: write
 
 concurrency:
   group: good-oss-citizen-gate-${{ github.event.pull_request.number }}
