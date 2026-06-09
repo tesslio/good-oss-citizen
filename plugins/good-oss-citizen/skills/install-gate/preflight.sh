@@ -98,8 +98,18 @@ check_branch_not_local() {
 }
 
 check_branch_not_remote() {
-  if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+  # `git ls-remote --exit-code` distinguishes three outcomes: 0 = the ref
+  # exists, 2 = the remote answered and has no such ref (the good case), and
+  # anything else = a transport/auth failure where we CANNOT confirm the
+  # remote's state. Treat that last case as a preflight failure rather than
+  # silently assuming the branch is absent and letting a later push surprise
+  # the user.
+  local rc=0
+  git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1 || rc=$?
+  if [[ $rc -eq 0 ]]; then
     push_failure "branch-not-remote" "Remote branch 'origin/${BRANCH}' already exists — delete with 'git push origin --delete ${BRANCH}' or rename before re-running"
+  elif [[ $rc -ne 2 ]]; then
+    push_failure "remote-reachable" "Could not reach 'origin' to check for an existing branch (git ls-remote exit ${rc}) — verify network and auth (e.g. 'gh auth status', 'git remote -v') before re-running"
   fi
 }
 

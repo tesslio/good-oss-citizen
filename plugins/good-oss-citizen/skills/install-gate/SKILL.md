@@ -35,7 +35,11 @@ If either `.github/workflows/contribution-gate.yml` or `.github/scripts/check_co
 
 ## Step 3 — Create Feature Branch
 
-`git checkout -b feat/add-good-oss-citizen-gate` from the repo's default branch. Proceed immediately to Step 4.
+```bash
+.tessl/plugins/tessl-labs/good-oss-citizen/skills/install-gate/branch.sh
+```
+
+Creates `feat/add-good-oss-citizen-gate` from origin's default branch (resolved from the remote, not the caller's current HEAD), and emits a JSON object `{"state":"created|already-on-branch","branch":...,"base":...}`. Idempotent: a no-op if already on the branch. Proceed immediately to Step 4.
 
 ## Step 4 — Scaffold Gate Files
 

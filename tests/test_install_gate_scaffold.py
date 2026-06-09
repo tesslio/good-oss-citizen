@@ -249,6 +249,48 @@ def test_preflight_missing_templates(failures: list[str]) -> None:
             fail(failures, "preflight_missing_templates: ok should be false")
 
 
+def test_branch_from_origin_default(failures: list[str]) -> None:
+    with tempfile.TemporaryDirectory() as d:
+        root = Path(d)
+        repo = make_consumer(root)
+        bare = root / "origin.git"
+        subprocess.run(["git", "init", "-q", "--bare", str(bare)], check=True, timeout=30)
+        git(repo, "remote", "add", "origin", str(bare))
+        default = git(repo, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip()
+        git(repo, "push", "-u", "origin", default)
+        git(repo, "remote", "set-head", "origin", "--auto")
+        rc, out, err = run_script(repo, "branch.sh")
+        if rc != 0:
+            return fail(failures, f"branch_from_origin_default: exit {rc}, stderr={err[:200]}")
+        if json.loads(out)["state"] != "created":
+            fail(failures, "branch_from_origin_default: first run state != created")
+        now = git(repo, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip()
+        if now != BRANCH:
+            fail(failures, f"branch_from_origin_default: on {now!r}, expected {BRANCH!r}")
+        rc2, out2, _ = run_script(repo, "branch.sh")
+        if rc2 != 0 or json.loads(out2)["state"] != "already-on-branch":
+            fail(failures, "branch_from_origin_default: re-run should be 'already-on-branch'")
+
+
+def test_preflight_flags_unreachable_remote(failures: list[str]) -> None:
+    """An origin that answers neither 'ref present' nor 'ref absent' (transport
+    failure) must be a preflight failure, not a silent pass."""
+    with tempfile.TemporaryDirectory() as d:
+        repo = make_consumer(Path(d))
+        # A configured-but-nonexistent local origin: `git ls-remote` exits
+        # fatally (not the clean exit-2 'no such ref'), with no auth prompt.
+        git(repo, "remote", "add", "origin", str(Path(d) / "does-not-exist.git"))
+        rc, out, _ = run_script(repo, "preflight.sh")
+        try:
+            data = json.loads(out)
+        except json.JSONDecodeError:
+            return fail(failures, f"preflight_flags_unreachable_remote: stdout not JSON: {out[:200]!r}")
+        if "remote-reachable" not in {f["check"] for f in data["failures"]}:
+            fail(failures, "preflight_flags_unreachable_remote: unreachable origin not flagged")
+        if rc == 0:
+            fail(failures, "preflight_flags_unreachable_remote: expected non-zero exit")
+
+
 def test_preflight_emits_json_without_python3(failures: list[str]) -> None:
     """preflight must report the python3-missing precondition as JSON — its own
     serializer cannot depend on python3 (rules/script-delegation.md)."""
@@ -291,7 +333,9 @@ TESTS = [
     test_commit_wrong_branch_guard,
     test_push_flow,
     test_preflight_missing_templates,
+    test_preflight_flags_unreachable_remote,
     test_preflight_emits_json_without_python3,
+    test_branch_from_origin_default,
 ]
 
 
