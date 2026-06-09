@@ -15,7 +15,9 @@ description: >
 
 # Install Gate Skill
 
-Process steps in order; do not skip ahead or parallelize. This skill scaffolds the good-oss-citizen contribution gate into a consumer repository — each step depends on the previous one.
+Process steps in order. Do not skip ahead.
+
+This skill scaffolds the good-oss-citizen contribution gate into a consumer repository — each step depends on the previous one; do not parallelize.
 
 ## Step 1 — Run Preflight Checks
 
