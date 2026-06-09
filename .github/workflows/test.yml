@@ -51,12 +51,16 @@ jobs:
             --pr-number 12 \
             --file-path README.md
 
-  contribution-declaration:
-    name: contribution-gate detector
+  install-gate:
+    name: install-gate scripts
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run contribution-declaration unit test
+      - name: Run contribution-declaration detector test
         # Offline, stdlib-only — exercises the detector the install-gate
         # skill vendors into consumer repos against fixed PR-body fixtures.
         run: python3 tests/test_contribution_declaration.py
+      - name: Run installer-script integration test
+        # Exercises scaffold/commit/push/preflight against throwaway git
+        # repos (push uses a local bare remote — no network).
+        run: python3 tests/test_install_gate_scaffold.py

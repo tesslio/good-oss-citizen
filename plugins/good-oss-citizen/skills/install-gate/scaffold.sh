@@ -180,9 +180,12 @@ print(json.dumps({
 }))
 PY
 
-  # Success — disarm rollback and discard the snapshot.
+  # Success — disarm rollback and discard the snapshot. Use an if-block, not
+  # `[[ ]] && rm`: when there is no snapshot the && list returns non-zero, and
+  # as the function's last statement under `set -e` that would exit non-zero
+  # despite a fully successful scaffold.
   trap - ERR
-  [[ -n "$tessl_snapshot" ]] && rm -f "$tessl_snapshot"
+  if [[ -n "$tessl_snapshot" ]]; then rm -f "$tessl_snapshot"; fi
 }
 
 [[ "${BASH_SOURCE[0]}" == "${0}" ]] && main "$@"
