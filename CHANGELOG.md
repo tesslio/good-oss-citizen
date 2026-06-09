@@ -1,8 +1,25 @@
 # Changelog
 
-All notable changes to the `good-oss-citizen` tile are recorded here. The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the tile follows semver via the `tesslio/patch-version-publish@v1` GitHub Action.
+All notable changes to the `good-oss-citizen` plugin are recorded here. The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the plugin follows semver via the `tesslio/patch-version-publish@v1` GitHub Action.
 
 ## [Unreleased]
+
+### Changed — Align CI skill-review and eval weights with current coding-policy
+
+Brought two pre-existing artifacts into compliance with the current `jbaruch/coding-policy` rules (surfaced by the cross-family policy reviewer on the migration PR):
+
+- `review.yml`: replaced the static per-skill `tessl skill review` steps with the canonical changed-skills-loop action `jbaruch/coding-policy/.github/actions/skill-review` (pinned), per `context-artifacts` "wire into CI as a changed-skills loop, not static per-skill steps."
+- Eval criteria: reweighted every `evals/*/criteria.json` `checklist[].max_score` to sum to exactly 100 (proportional scaling — relative weights preserved), per the eval-authoring contract "weights MUST sum to exactly 100."
+
+### Changed — Migrate from tile to plugin format
+
+Migrated the project from the legacy Tessl *tile* format to the *plugin* format, following the registry-wide rename:
+
+- Manifest: replaced `tile.json` with `.tessl-plugin/plugin.json` (generated via `tessl plugin migrate`; `plugin.json` is now the authoritative manifest).
+- Layout: renamed the `tiles/good-oss-citizen/` source tree to `plugins/good-oss-citizen/`; repointed the root `README.md` symlink accordingly.
+- Runtime paths: updated the helper-script install path referenced throughout the rules and skills from `.tessl/tiles/tessl-labs/good-oss-citizen/...` to `.tessl/plugins/tessl-labs/good-oss-citizen/...` to match where the current CLI installs plugins. This is a functional change — consumers on the new CLI will find `github.sh` under `.tessl/plugins/`.
+- CI: updated `publish.yml`, `test.yml`, and `review.yml` path filters and step paths from `tiles/` to `plugins/`.
+- Terminology: updated user-facing and developer-facing prose ("tile" → "plugin") in the README, preflight references, helper-script comments, research notes, and eval criteria. Dated historical changelog entries below are left intact as records of the time they describe.
 
 ### Changed — Tighten two low-lift template-compliance evals
 
@@ -122,6 +139,10 @@ Local-file scenarios inline their fixture content directly in `task.md` rather t
 - `expected-results.json` updated to the new ids and paths.
 
 The OpenClaw fixture tree itself was already removed from PR #22's rework; these two synthetic-fixture filenames were the last remaining artefact of that source-of-inspiration name.
+
+## [1.1.1 — 1.1.8] — 2026-04-26 / 2026-04-27
+
+`tesslio/patch-version-publish@v1` auto-bumps a patch on every merge to `main` but doesn't write per-version CHANGELOG sections. The work below shipped as patches between 1.1.0 and 1.1.8 — collected here as a range rather than guessing which entry landed in which patch. Headline storyline: ship the `triage` skill (1.1.3), rework the eval suite for honest signal (1.1.4–1.1.5), then iterate on the rubric three times to land the "filled field + distant contradiction" routing (1.1.6 → 1.1.7 → 1.1.8).
 
 ## [1.1.0] — 2026-04-26
 

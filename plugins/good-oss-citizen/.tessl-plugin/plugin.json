@@ -1,0 +1,15 @@
+{
+  "name": "tessl-labs/good-oss-citizen",
+  "version": "1.1.0",
+  "description": "Rules and skills that teach AI agents how to contribute to open source projects without being the villain.",
+  "private": false,
+  "skills": [
+    "skills/recon",
+    "skills/propose",
+    "skills/preflight",
+    "skills/triage"
+  ],
+  "rules": [
+    "rules/good-oss-citizen.md"
+  ]
+}

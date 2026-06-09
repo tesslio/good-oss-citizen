@@ -8,8 +8,11 @@ on:
   pull_request:
     branches:
       - main
+    # Match the whole skill tree, not just SKILL.md — a skill's scripts,
+    # reference files, and rubrics are review surface too, and the
+    # changed-skills loop below must run when any of them change.
     paths:
-      - 'tiles/**/SKILL.md'
+      - 'plugins/**/skills/**'
 
 jobs:
   review:
@@ -31,15 +34,14 @@ jobs:
           version: "0.77.0"
           token: ${{ secrets.TESSL_TOKEN }}
 
-      # Per `rules/context-artifacts.md` (Mandatory Review) — every skill
-      # gets an explicit `tessl skill review --threshold 85` step so the
-      # gate is visible at the workflow level, not implicit in a loop.
-      # Adding a new skill = add a step here.
-      - name: Review skill — recon
-        run: tessl skill review --threshold 85 tiles/good-oss-citizen/skills/recon/SKILL.md
-      - name: Review skill — propose
-        run: tessl skill review --threshold 85 tiles/good-oss-citizen/skills/propose/SKILL.md
-      - name: Review skill — preflight
-        run: tessl skill review --threshold 85 tiles/good-oss-citizen/skills/preflight/SKILL.md
-      - name: Review skill — triage
-        run: tessl skill review --threshold 85 tiles/good-oss-citizen/skills/triage/SKILL.md
+      # Per `jbaruch/coding-policy: context-artifacts` (Mandatory Review) —
+      # wire skill review as a changed-skills loop (review only skills changed
+      # in this PR), not static per-skill steps. The canonical composite action
+      # diffs `base-ref..HEAD` under `skills-dir` and reviews each changed skill
+      # at `--threshold 85`; new/removed skills are picked up automatically.
+      - name: Review changed skills
+        uses: jbaruch/coding-policy/.github/actions/skill-review@23c86ae16b3edd234275e08f55f64c6f1afb5583
+        with:
+          threshold: "85"
+          skills-dir: plugins/good-oss-citizen/skills
+          base-ref: ${{ github.event.pull_request.base.sha }}
