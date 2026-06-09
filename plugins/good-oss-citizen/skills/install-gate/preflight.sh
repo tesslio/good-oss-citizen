@@ -37,6 +37,25 @@ warnings=""
 
 push_failure() { failures+="$1	$2"$'\n'; }
 
+# Serialize the accumulators to JSON in pure bash. preflight must emit its
+# envelope even when python3 is absent — python3 is one of the very
+# preconditions this script checks, so it cannot be the tool that reports its
+# own absence (rules/script-delegation.md: a script must self-emit its
+# failure envelope).
+json_escape() { local s=$1; s=${s//\\/\\\\}; s=${s//\"/\\\"}; printf '%s' "$s"; }
+
+json_array() {  # $1 = tab-delimited "check<TAB>reason" lines
+  local blob=$1 out="" sep="" line check reason
+  while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    check=${line%%$'\t'*}
+    reason=${line#*$'\t'}
+    out+="${sep}{\"check\":\"$(json_escape "$check")\",\"reason\":\"$(json_escape "$reason")\"}"
+    sep=","
+  done <<< "$blob"
+  printf '[%s]' "$out"
+}
+
 check_in_git_worktree() {
   git rev-parse --git-dir >/dev/null 2>&1 || \
     push_failure "in-git-worktree" "Not inside a git worktree — run the skill from the root of the consumer repo's git checkout"
@@ -100,29 +119,11 @@ main() {
     fi
   fi
 
-  local rc=0
-  [[ -n "$failures" ]] && rc=1
+  local rc=0 ok="true"
+  if [[ -n "$failures" ]]; then rc=1; ok="false"; fi
 
-  FAILURES="$failures" WARNINGS="$warnings" python3 - <<'PY'
-import json, os
-
-def parse(blob):
-    items = []
-    for line in blob.splitlines():
-        if not line.strip():
-            continue
-        check, _, reason = line.partition("\t")
-        items.append({"check": check, "reason": reason})
-    return items
-
-failures = parse(os.environ.get("FAILURES", ""))
-warnings = parse(os.environ.get("WARNINGS", ""))
-print(json.dumps({
-    "ok": len(failures) == 0,
-    "failures": failures,
-    "warnings": warnings,
-}))
-PY
+  printf '{"ok":%s,"failures":%s,"warnings":%s}\n' \
+    "$ok" "$(json_array "$failures")" "$(json_array "$warnings")"
 
   if [[ $rc -ne 0 ]]; then
     echo "preflight: precondition(s) failed — see the 'failures' array in stdout for recovery commands" >&2

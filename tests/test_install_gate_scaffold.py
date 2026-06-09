@@ -249,6 +249,37 @@ def test_preflight_missing_templates(failures: list[str]) -> None:
             fail(failures, "preflight_missing_templates: ok should be false")
 
 
+def test_preflight_emits_json_without_python3(failures: list[str]) -> None:
+    """preflight must report the python3-missing precondition as JSON — its own
+    serializer cannot depend on python3 (rules/script-delegation.md)."""
+    import os
+    import shutil
+    with tempfile.TemporaryDirectory() as d:
+        repo = make_consumer(Path(d))
+        bindir = Path(d) / "bin"
+        bindir.mkdir()
+        for tool in ("git", "gh", "grep", "head", "sed"):
+            real = shutil.which(tool)
+            if real:
+                os.symlink(real, bindir / tool)
+        env = {"PATH": str(bindir), "HOME": os.environ.get("HOME", "/tmp")}
+        proc = subprocess.run(
+            ["/bin/bash", str(GATE_SRC / "preflight.sh")],
+            cwd=str(repo), env=env, capture_output=True, text=True, timeout=60, check=False,
+        )
+        try:
+            data = json.loads(proc.stdout)
+        except json.JSONDecodeError:
+            return fail(failures,
+                        f"preflight_emits_json_without_python3: stdout not JSON: {proc.stdout[:200]!r}")
+        if proc.returncode == 0:
+            fail(failures, "preflight_emits_json_without_python3: expected non-zero exit")
+        if data.get("ok") is not False:
+            fail(failures, "preflight_emits_json_without_python3: ok should be false")
+        if "python3" not in {f["check"] for f in data["failures"]}:
+            fail(failures, "preflight_emits_json_without_python3: python3 not flagged as a failure")
+
+
 TESTS = [
     test_scaffold_fresh,
     test_scaffold_adds_missing_dep,
@@ -260,6 +291,7 @@ TESTS = [
     test_commit_wrong_branch_guard,
     test_push_flow,
     test_preflight_missing_templates,
+    test_preflight_emits_json_without_python3,
 ]
 
 
