@@ -7,7 +7,8 @@
     "skills/recon",
     "skills/propose",
     "skills/preflight",
-    "skills/triage"
+    "skills/triage",
+    "skills/install-gate"
   ],
   "rules": [
     "rules/good-oss-citizen.md"

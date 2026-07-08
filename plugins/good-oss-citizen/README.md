@@ -41,6 +41,7 @@ The plugin has three layers:
 | [propose](skills/propose/SKILL.md) | Pick the right venue (issue, discussion, or PR) for the contribution |
 | [preflight](skills/preflight/SKILL.md) | Pre-submission checklist, including a body-vs-template compliance rubric |
 | [triage](skills/triage/SKILL.md) | Check an already-open issue or PR body against the repo's templates; draft a suggested comment for human review |
+| [install-gate](skills/install-gate/SKILL.md) | Maintainer-side: scaffold a PR-time contribution gate (AI-disclosure check) into a consumer repo — see [For maintainers](#for-maintainers) |
 
 ## Research
 
@@ -53,7 +54,11 @@ Every rule and skill instruction traces back to documented failure modes from re
 
 ## For maintainers
 
-You don't have to ban AI — you can guide it instead. Add a `tessl.json` to your repository root:
+You don't have to ban AI — you can guide it, and you can enforce a baseline. There are two levers, and they're strongest combined.
+
+### 1. Nudge agents to use it — `tessl.json`
+
+Add a `tessl.json` to your repository root:
 
 ```json
 {
@@ -66,11 +71,23 @@ You don't have to ban AI — you can guide it instead. Add a `tessl.json` to you
 }
 ```
 
-Then mention it in your README, CONTRIBUTING.md, or AI_POLICY.md:
+A tessl-aware coding agent reads this and installs good-oss-citizen automatically before it works in your repo — no manual setup from the contributor. Back it up with a line in your README, CONTRIBUTING.md, or AI_POLICY.md for agents and humans that don't read `tessl.json`:
 
 > We accept considerate AI-assisted contributions. Install `tessl install tessl-labs/good-oss-citizen` in your fork first.
 
-AI agents read contribution guidelines before they start working. When an agent sees this instruction, it installs the plugin and invokes it automatically — no manual setup from the contributor required.
+This is a *nudge*: it reaches tessl-aware agents, but not humans or other tooling.
+
+### 2. Enforce disclosure at PR time — the contribution gate
+
+For enforcement contributors can't bypass, install the **contribution gate**. With good-oss-citizen installed, ask your agent to run the `install-gate` skill (e.g. "set up the good-oss-citizen contribution gate"). It opens a PR that adds:
+
+- a `pull_request_target` GitHub Actions check that **fails any PR whose description lacks a contribution declaration** — an *AI Disclosure* section, or a checked "written without AI assistance" box — and posts a sticky comment explaining the fix (it also works on PRs from forks);
+- a vendored, stdlib-only detection script and a PR template wired to it;
+- the `tessl.json` entry from lever 1.
+
+Mark the **`Contribution declaration`** status check as required in your branch protection so it blocks merges. No repository secrets are needed — the gate uses the built-in `GITHUB_TOKEN`.
+
+**What it does and doesn't do.** The gate enforces an *outcome* — AI use is disclosed, or declared absent — on the PR side, where it can't be bypassed. It does **not**, and cannot, prove that good-oss-citizen actually ran: by design the plugin makes an AI contribution look like a careful human's, so a hand-written disclosure passes too. That's the point — the goal is no *undisclosed* AI slop, and the gate's failure comment points contributors back to the plugin. Client-side git hooks are deliberately **not** shipped: they can't be forced on clone and are trivially bypassed (`--no-verify`), so they'd only pretend to enforce.
 
 ## Security
 
