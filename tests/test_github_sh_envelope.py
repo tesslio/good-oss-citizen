@@ -23,15 +23,18 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
+from unittest import mock
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT_DIR = REPO_ROOT / "plugins" / "good-oss-citizen" / "skills" / "recon" / "scripts" / "bash"
 GITHUB_SH = SCRIPT_DIR / "github.sh"
 sys.path.insert(0, str(SCRIPT_DIR))
 from _templates import issue_template_dir_paths  # noqa: E402
+import _envelope  # noqa: E402
 
 # (command-name, args-template, expected-ok). args-template uses {repo} and
 # {issue_number}/{pr_number}/{file_path} placeholders.
@@ -88,6 +91,50 @@ def assert_issue_template_config_excluded() -> None:
         ".github/ISSUE_TEMPLATE/bug.yml",
         ".github/ISSUE_TEMPLATE/feature.md",
     ], "extension filter must apply on top of the config exclusion"
+
+
+def assert_curl_auth_uses_stdin_config() -> None:
+    """Regression guard: tokens must not be placed in the curl argv."""
+    calls = []
+
+    def fake_run(cmd, **kwargs):
+        calls.append((cmd, kwargs.get("input")))
+        if cmd[0] == "gh":
+            raise FileNotFoundError
+        return subprocess.CompletedProcess(cmd, 0, stdout='{"ok": true}', stderr="")
+
+    with mock.patch.dict(os.environ, {"GH_TOKEN": "secret-token"}, clear=False):
+        with mock.patch.object(_envelope.subprocess, "run", side_effect=fake_run):
+            assert _envelope.fetch("/repos/example/project") == '{"ok": true}'
+
+    curl_calls = [call for call in calls if call[0][0] == "curl"]
+    assert curl_calls, "fetch should fall back to curl when gh is unavailable"
+    curl_cmd, stdin = curl_calls[0]
+    # Substring, not membership: the vulnerable form was a single joined
+    # argument, `-H Authorization: Bearer <token>`, so no element ever equals
+    # the bare token and a membership test passes against the bug it guards.
+    assert not any("secret-token" in arg for arg in curl_cmd), (
+        "GitHub token leaked through curl argv"
+    )
+    assert "--config" in curl_cmd, "curl must read auth config from a config source"
+    assert curl_cmd[curl_cmd.index("--config") + 1] == "-", "--config must read stdin"
+    assert stdin == 'header = "Authorization: Bearer secret-token"\n'
+
+
+def assert_optional_fetch_status_semantics() -> None:
+    """Regression guard: optional 404 is distinct from ambiguous failures."""
+    responses = iter([
+        ({"name": "DCO"}, 200),
+        (None, 404),
+        (None, 500),
+    ])
+
+    with mock.patch.object(
+        _envelope, "fetch_json_with_status", side_effect=lambda endpoint: next(responses)
+    ):
+        assert _envelope.fetch_optional_json("/exists") == ({"name": "DCO"}, True)
+        assert _envelope.fetch_optional_json("/missing") == (None, False)
+        assert _envelope.fetch_optional_json("/server-error") == (None, None)
 
 
 def run(cmd_name: str, args: list[str]) -> tuple[int, str]:
@@ -151,6 +198,10 @@ def main() -> int:
     try:
         assert_issue_template_config_excluded()
         print("PASS static-regression (ISSUE_TEMPLATE config.yml excluded)")
+        assert_curl_auth_uses_stdin_config()
+        print("PASS static-regression (curl auth uses stdin config)")
+        assert_optional_fetch_status_semantics()
+        print("PASS static-regression (optional fetch status semantics)")
     except AssertionError as e:
         print(f"FAIL static-regression: {e}", file=sys.stderr)
         return 1

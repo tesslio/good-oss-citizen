@@ -2,6 +2,14 @@
 
 All notable changes to the `good-oss-citizen` plugin are recorded here. The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the plugin follows semver via the `tesslio/patch-version-publish@v1` GitHub Action.
 
+## [Unreleased]
+
+### Fixed — Keep the GitHub token out of the curl command line
+
+When `gh` is not available, the scripts fall back to `curl`. The token was passed as a command line argument, so anyone with access to the same machine could read it with `ps`. It is now sent to curl through stdin instead. Quotes, backslashes and line breaks in the value are escaped, so a token cannot add its own curl options.
+
+`fetch_json` returns `None` both when a file does not exist and when the request fails. `legal` could not tell those apart, so a failed request was reported as "no DCO file". That is a confident wrong answer about a legal requirement. New helpers also return the HTTP status, and `legal` now fails loudly when it cannot tell.
+
 ## [1.1.12] — 2026-06-09
 
 ### Added — Maintainer-installable contribution gate (`install-gate` skill)
