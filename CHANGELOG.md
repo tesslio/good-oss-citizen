@@ -2,6 +2,18 @@
 
 All notable changes to the `good-oss-citizen` plugin are recorded here. The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the plugin follows semver via the `tesslio/patch-version-publish@v1` GitHub Action.
 
+## [Unreleased]
+
+### Fixed — `recon` Step 3 when the task has no issue
+
+Step 3 said "Run ALL three commands — these are not optional", but all three need an issue number. For an unsolicited fix or a refactor there is no issue, so the agent had to invent a number or skip a step that is marked as required.
+
+Step 3 now starts with the no-issue case and says to skip it. Nothing is lost: both hard stops in that step are about an issue, so with no issue there is no claim to honor and no label to check.
+
+Skipping the step leaves two sections of the report with no source, so Step 3 now says what to write in them.
+
+`rules/good-oss-citizen.md` had the same problem, and it is always active, so it outranks the skill text. Its rule for unsolicited changes told the agent to run `related-prs`, which needs an issue number. It now says `prs-closed` and `issues-closed`.
+
 ## [1.1.12] — 2026-06-09
 
 ### Added — Maintainer-installable contribution gate (`install-gate` skill)
