@@ -126,4 +126,36 @@ def fetch_json(endpoint):
         return None
 
 
+# A single issue or pull request can exceed the 30-item default page size,
+# and the tail is where maintainers usually record a verdict. This paginates
+# with an explicit ceiling so a pathological thread can't turn one recon call
+# into an unbounded API sweep. MAX_PAGES * 100 items is far beyond any real
+# discussion; how a caller treats hitting it is the caller's decision.
+MAX_PAGES = 10
+
+
+def fetch_json_pages(endpoint):
+    """Fetch up to MAX_PAGES pages of an array-returning endpoint.
+
+    Returns (items, complete). `complete` is False when the ceiling was hit
+    and more pages remain, so a caller can decide between warning and failing
+    rather than silently truncating. Returns (None, False) if a page fails.
+    """
+    items = []
+    separator = "&" if "?" in endpoint else "?"
+    for page in range(1, MAX_PAGES + 1):
+        data = fetch_json(f"{endpoint}{separator}per_page=100&page={page}")
+        if not isinstance(data, list):
+            return None, False
+        items.extend(data)
+        if len(data) < 100:
+            return items, True
+    # A full final page is ambiguous: the next page may be empty. Probe once
+    # more rather than reporting a complete read as truncated.
+    tail = fetch_json(f"{endpoint}{separator}per_page=100&page={MAX_PAGES + 1}")
+    if isinstance(tail, list) and not tail:
+        return items, True
+    return items, False
+
+
 _install_excepthook()

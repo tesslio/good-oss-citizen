@@ -37,7 +37,7 @@ Search BOTH closed PRs AND closed issues for prior attempts at the same or simil
 ```bash
 bash .tessl/plugins/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh prs-closed OWNER/REPO
 ```
-A related PR is one that touches the same file paths, the same function/class names, references the same issue number, or has a title mentioning the same component. For any related PR, read its comments to get the maintainer's rejection reason:
+A related PR is one that touches the same file paths, the same function/class names, references the same issue number, or has a title mentioning the same component. For any related PR, read its comments to get the maintainer's rejection reason. `pr-comments` tags each entry with a `kind` of `conversation`, `review`, or `review_comment`. Read `state` on a `review` entry as the verdict (`CHANGES_REQUESTED`, `DISMISSED`, `APPROVED`) even when its `body` is empty, which is common: maintainers often request changes and write every reason inline. In that case the reasons are the `review_comment` entries, each carrying the `path` and `line` it was left on:
 ```bash
 bash .tessl/plugins/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh pr-comments OWNER/REPO NUMBER
 ```
