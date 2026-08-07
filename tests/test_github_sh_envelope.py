@@ -137,6 +137,63 @@ def assert_optional_fetch_status_semantics() -> None:
         assert _envelope.fetch_optional_json("/server-error") == (None, None)
 
 
+def assert_curl_config_escapes_control_characters() -> None:
+    """Regression guard: a token cannot inject a second curl directive.
+
+    curl's config parser is line-oriented, so an unescaped newline in the value
+    would start a new directive (`proxy = ...` routes every request elsewhere).
+    """
+    with mock.patch.dict(
+        os.environ, {"GH_TOKEN": 'a\nproxy = http://attacker\rb"c\\d'}, clear=False
+    ):
+        config = _envelope._curl_auth_config()
+    assert config.count("\n") == 1, "token must not introduce another config line"
+    assert config.endswith("\n")
+    assert "\\n" in config and "\\r" in config, "line breaks must be escaped, not dropped"
+    assert '\\"' in config and "\\\\" in config, "quote and backslash must stay escaped"
+
+
+def assert_status_fetch_falls_back_to_curl() -> None:
+    """Regression guard: only a definitive gh answer ends the attempt.
+
+    `fetch` retries with curl on any gh failure. If the status-aware variant
+    stopped at a gh 401, a stale gh token would turn a working unauthenticated
+    lookup into "unknown", which callers escalate into a hard failure.
+    """
+    for gh_status, expect_curl in ((401, True), (403, True), (500, True), (404, False)):
+        attempted = []
+
+        def fake_run(cmd, **kwargs):
+            attempted.append(cmd[0])
+            if cmd[0] == "gh":
+                return subprocess.CompletedProcess(
+                    cmd, 1, stdout=f"HTTP/2 {gh_status}\r\n\r\n", stderr=""
+                )
+            return subprocess.CompletedProcess(cmd, 0, stdout='{"ok": true}\n200', stderr="")
+
+        with mock.patch.object(_envelope.subprocess, "run", side_effect=fake_run):
+            data, status = _envelope.fetch_json_with_status("/repos/example/project")
+        if expect_curl:
+            assert "curl" in attempted, f"gh {gh_status} must fall through to curl"
+            assert status == 200 and data == {"ok": True}
+        else:
+            assert attempted == ["gh"], "a definitive gh 404 must not spend a curl call"
+            assert status == 404
+
+
+def assert_health_file_precedence_order() -> None:
+    """Regression guard: GitHub resolves .github/, then root, then docs/.
+
+    Reversing these silently returns a stale root file for a repository whose
+    real guidance lives in `.github/`, which is what GitHub actually serves.
+    """
+    assert _envelope.health_candidates("CONTRIBUTING.md") == (
+        ".github/CONTRIBUTING.md",
+        "CONTRIBUTING.md",
+        "docs/CONTRIBUTING.md",
+    )
+
+
 def run(cmd_name: str, args: list[str]) -> tuple[int, str]:
     proc = subprocess.run(
         ["bash", str(GITHUB_SH), cmd_name, *args],
@@ -202,6 +259,12 @@ def main() -> int:
         print("PASS static-regression (curl auth uses stdin config)")
         assert_optional_fetch_status_semantics()
         print("PASS static-regression (optional fetch status semantics)")
+        assert_curl_config_escapes_control_characters()
+        print("PASS static-regression (curl config escapes control characters)")
+        assert_status_fetch_falls_back_to_curl()
+        print("PASS static-regression (status fetch falls back to curl)")
+        assert_health_file_precedence_order()
+        print("PASS static-regression (health file precedence order)")
     except AssertionError as e:
         print(f"FAIL static-regression: {e}", file=sys.stderr)
         return 1

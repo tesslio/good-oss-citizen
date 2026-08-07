@@ -49,6 +49,11 @@ if not tree or "tree" not in tree:
     fail(CMD, f"could not fetch tree {sha} for {REPO}")
 
 paths = {item["path"] for item in tree.get("tree", []) if item.get("type") == "blob"}
+scan_warnings = []
+if tree.get("truncated"):
+    # A truncated listing silently omits entries, so `missing` below means
+    # "not seen", not "not present".
+    scan_warnings.append("tree listing truncated - treat `missing` as unconfirmed")
 
 def categorize(targets):
     return {
@@ -56,10 +61,42 @@ def categorize(targets):
         "missing": [t for t in targets if t not in paths],
     }
 
-policy_files = categorize([
-    "CONTRIBUTING.md", "AI_POLICY.md", "CODE_OF_CONDUCT.md",
-    "SECURITY.md", "DCO", "LICENSE", "README.md",
+# GitHub resolves community health files from `.github/`, then the repository
+# root, then `docs/`, taking the first hit. The tree is already in hand, so
+# resolving all three locations here costs nothing and keeps this consistent
+# with `ai-policy` / `contributing-requirements`; otherwise the same report
+# would list CONTRIBUTING.md as missing while quoting its contents.
+HEALTH_FILE_DIRS = (".github/", "", "docs/")
+
+
+def resolve_health(name):
+    for prefix in HEALTH_FILE_DIRS:
+        candidate = f"{prefix}{name}"
+        if candidate in paths:
+            return candidate
+    return None
+
+
+def categorize_health(targets):
+    found, missing = [], []
+    for name in targets:
+        resolved = resolve_health(name)
+        (found.append(resolved) if resolved else missing.append(name))
+    return {"found": found, "missing": missing}
+
+
+# README resolves the same way: GitHub surfaces a readme from `.github/`, the
+# root, or `docs/`. (The organisation profile readme is a different thing --
+# it lives in the org's own `.github` *repository*, not in a `.github/`
+# directory here.) LICENSE and DCO stay root-only: GitHub only detects a
+# licence at the root.
+root_only = categorize(["DCO", "LICENSE"])
+policy_files = categorize_health([
+    "CONTRIBUTING.md", "AI_POLICY.md", "CODE_OF_CONDUCT.md", "SECURITY.md",
+    "README.md",
 ])
+policy_files["found"] += root_only["found"]
+policy_files["missing"] += root_only["missing"]
 agent_instructions = categorize([
     "AGENTS.md", "CLAUDE.md", ".cursorrules",
     ".github/copilot-instructions.md", "HOWTOAI.md", "PROMPTING.md",
@@ -70,10 +107,15 @@ conventions = categorize([
     "commitlint.config.js", "commitlint.config.cjs",
     ".golangci.yml", "Cargo.toml", "go.mod",
 ])
-build_meta = categorize([
-    "CHANGELOG.md", "CODEOWNERS", "DEVELOPMENT.md", "Makefile",
-    "justfile", "Taskfile.yml",
+# CODEOWNERS resolves from `.github/`, the root, or `docs/` — the same order
+# the `codeowners` command uses. Listing it as missing here while that command
+# returns its rules is exactly the self-contradiction this change removes.
+build_meta = categorize_health(["CODEOWNERS"])
+_other_meta = categorize([
+    "CHANGELOG.md", "DEVELOPMENT.md", "Makefile", "justfile", "Taskfile.yml",
 ])
+build_meta["found"] += _other_meta["found"]
+build_meta["missing"] += _other_meta["missing"]
 
 pr_template_singles = [
     ".github/PULL_REQUEST_TEMPLATE.md", ".github/pull_request_template.md",
@@ -107,7 +149,7 @@ emit(CMD, {
     "ci_workflows": {
         "found": sorted(p for p in paths if p.startswith(".github/workflows/"))
     },
-})
+}, warnings=scan_warnings)
 PYEOF
         ;;
 
@@ -491,7 +533,13 @@ PYEOF
         REPO="$REPO" python3 <<'PYEOF'
 import base64
 import os
-from _envelope import emit, fail, fetch_json
+from _envelope import (
+    emit,
+    fail,
+    fetch_json,
+    fetch_optional_json,
+    health_candidates,
+)
 
 REPO = os.environ["REPO"]
 repo_meta = fetch_json(f"/repos/{REPO}")
@@ -499,20 +547,61 @@ if not repo_meta or "default_branch" not in repo_meta:
     fail("ai-policy", f"could not fetch repo metadata for {REPO}")
 ref = repo_meta["default_branch"]
 
-results = []
-for path in ("AI_POLICY.md", "CODE_OF_CONDUCT.md", "CONTRIBUTING.md"):
-    d = fetch_json(f"/repos/{REPO}/contents/{path}?ref={ref}")
-    if not d or "content" not in d:
-        results.append({"path": path, "found": False, "content": None})
-        continue
-    try:
-        content = base64.b64decode(d["content"]).decode("utf-8")
-    except (ValueError, UnicodeDecodeError):
-        results.append({"path": path, "found": False, "content": None})
-        continue
-    results.append({"path": path, "found": True, "content": content})
+# GitHub resolves community health files from `.github/`, then the repository
+# root, then `docs/`, taking the first hit. Probing only the root meant a
+# project whose CONTRIBUTING.md lives in `.github/` — one of the most common
+# layouts — read as having no contribution guidance at all, and so no AI
+# policy. Probe in GitHub's order and stop at the first readable match.
+POLICY_DOCS = ("AI_POLICY.md", "CODE_OF_CONDUCT.md", "CONTRIBUTING.md")
 
-emit("ai-policy", {"default_branch": ref, "files": results})
+warnings = []
+
+def read_doc(name):
+    """Resolve one health file in GitHub's precedence order.
+
+    Stops at the first readable hit, so the common case where the file sits in
+    `.github/` or at the root costs one or two lookups; only a document that is
+    absent everywhere costs all three.
+    """
+    candidates = health_candidates(name)
+    masked = False
+    for path in candidates:
+        d, found = fetch_optional_json(f"/repos/{REPO}/contents/{path}?ref={ref}")
+        if found is False:
+            continue
+        if found is None:
+            # A higher-precedence candidate we could not read must not be
+            # silently masked by a lower-precedence hit: GitHub would serve
+            # the one we failed to read, not the one we are about to return.
+            masked = True
+            continue
+        if not d or "content" not in d:
+            # 200 without content: a directory, or a symlink out of the repo.
+            continue
+        try:
+            return path, base64.b64decode(d["content"]).decode("utf-8"), masked
+        except (ValueError, UnicodeDecodeError):
+            warnings.append(f"{path} is not valid UTF-8 - trying the next location")
+            continue
+    return None, None, masked
+
+
+results = []
+for name in POLICY_DOCS:
+    path, content, masked = read_doc(name)
+    if masked:
+        if content is not None:
+            warnings.append(
+                f"a higher-precedence location for {name} could not be read - "
+                "the file reported may not be the one GitHub serves"
+            )
+        else:
+            # Nothing resolved, so the unreadable candidate need not have been
+            # higher-precedence than anything; do not claim that it was.
+            warnings.append(f"a location for {name} could not be read - its absence is unconfirmed")
+    results.append({"path": path or name, "found": content is not None, "content": content})
+
+emit("ai-policy", {"default_branch": ref, "files": results}, warnings=warnings)
 PYEOF
         ;;
 
@@ -521,7 +610,13 @@ PYEOF
 import base64
 import os
 import re
-from _envelope import emit, fail, fetch_json
+from _envelope import (
+    emit,
+    fail,
+    fetch_json,
+    fetch_optional_json,
+    health_candidates,
+)
 
 REPO = os.environ["REPO"]
 repo_meta = fetch_json(f"/repos/{REPO}")
@@ -529,16 +624,44 @@ if not repo_meta or "default_branch" not in repo_meta:
     fail("disclosure-format", f"could not fetch repo metadata for {REPO}")
 ref = repo_meta["default_branch"]
 
-d = fetch_json(f"/repos/{REPO}/contents/AI_POLICY.md?ref={ref}")
-if not d or "content" not in d:
-    emit("disclosure-format", {"format": "none", "template": None},
-         warnings=["AI_POLICY.md not found — no disclosure format required"])
-    raise SystemExit(0)
+# Resolve in GitHub's precedence order, using the tree to avoid probing
+# locations that cannot exist.
+warnings = []
+candidates = health_candidates("AI_POLICY.md")
 
-try:
-    content = base64.b64decode(d["content"]).decode("utf-8")
-except (ValueError, UnicodeDecodeError):
-    fail("disclosure-format", "could not decode AI_POLICY.md")
+content = None
+masked = False
+for path in candidates:
+    d, found = fetch_optional_json(f"/repos/{REPO}/contents/{path}?ref={ref}")
+    if found is False:
+        continue
+    if found is None:
+        masked = True
+        continue
+    # 200 without content: a directory, or a symlink out of the repo.
+    if not d or "content" not in d:
+        continue
+    try:
+        content = base64.b64decode(d["content"]).decode("utf-8")
+    except (ValueError, UnicodeDecodeError):
+        # Match ai-policy: try the next location rather than failing outright.
+        warnings.append(f"{path} is not valid UTF-8 - trying the next location")
+        continue
+    break
+
+if masked:
+    if content is not None:
+        warnings.append(
+            "a higher-precedence AI policy location could not be read - "
+            "the policy reported may not be the one GitHub serves"
+        )
+    else:
+        warnings.append("an AI policy location could not be read - its absence is unconfirmed")
+
+if content is None:
+    emit("disclosure-format", {"format": "none", "template": None},
+         warnings=warnings + ["AI_POLICY.md not found — no disclosure format required"])
+    raise SystemExit(0)
 
 blocks = re.findall(r"```[\s\S]*?```", content)
 template_block = None
@@ -548,7 +671,8 @@ for block in blocks:
         break
 
 if template_block:
-    emit("disclosure-format", {"format": "code_block", "template": template_block})
+    emit("disclosure-format", {"format": "code_block", "template": template_block},
+         warnings=warnings)
     raise SystemExit(0)
 
 # Bullet/prose fallback — collect a small window around the disclosure heading
@@ -568,7 +692,7 @@ if format_lines:
     raise SystemExit(0)
 
 emit("disclosure-format", {"format": "none", "template": None},
-     warnings=["AI_POLICY.md exists but no specific disclosure template found — recommend voluntary disclosure"])
+     warnings=warnings + ["AI_POLICY.md exists but no specific disclosure template found — recommend voluntary disclosure"])
 PYEOF
         ;;
 
@@ -673,7 +797,13 @@ PYEOF
         REPO="$REPO" python3 <<'PYEOF'
 import base64
 import os
-from _envelope import emit, fail, fetch_json
+from _envelope import (
+    emit,
+    fail,
+    fetch_json,
+    fetch_optional_json,
+    health_candidates,
+)
 
 REPO = os.environ["REPO"]
 repo_meta = fetch_json(f"/repos/{REPO}")
@@ -681,17 +811,43 @@ if not repo_meta or "default_branch" not in repo_meta:
     fail("contributing-requirements", f"could not fetch repo metadata for {REPO}")
 ref = repo_meta["default_branch"]
 
-d = fetch_json(f"/repos/{REPO}/contents/CONTRIBUTING.md?ref={ref}")
-if not d or "content" not in d:
-    emit("contributing-requirements", {"found": False, "content": None})
+# Resolve in GitHub's precedence order, using the tree to avoid probing
+# locations that cannot exist.
+warnings = []
+candidates = health_candidates("CONTRIBUTING.md")
+
+masked = False
+for path in candidates:
+    d, found = fetch_optional_json(f"/repos/{REPO}/contents/{path}?ref={ref}")
+    if found is False:
+        continue
+    if found is None:
+        masked = True
+        continue
+    # 200 without content: a directory, or a symlink out of the repo.
+    if not d or "content" not in d:
+        continue
+    try:
+        content = base64.b64decode(d["content"]).decode("utf-8")
+    except (ValueError, UnicodeDecodeError):
+        # Match ai-policy: try the next location rather than failing outright.
+        warnings.append(f"{path} is not valid UTF-8 - trying the next location")
+        continue
+    if masked:
+        warnings.append(
+            "a higher-precedence CONTRIBUTING.md location could not be read - "
+            "the file reported may not be the one GitHub serves"
+        )
+    emit("contributing-requirements", {"found": True, "content": content, "path": path},
+         warnings=warnings)
     raise SystemExit(0)
 
-try:
-    content = base64.b64decode(d["content"]).decode("utf-8")
-except (ValueError, UnicodeDecodeError):
-    fail("contributing-requirements", "could not decode CONTRIBUTING.md")
-
-emit("contributing-requirements", {"found": True, "content": content})
+if masked:
+    warnings.append(
+        "a CONTRIBUTING.md location could not be read - its absence is unconfirmed"
+    )
+emit("contributing-requirements", {"found": False, "content": None, "path": None},
+     warnings=warnings)
 PYEOF
         ;;
 
@@ -708,7 +864,8 @@ if not repo_meta or "default_branch" not in repo_meta:
 ref = repo_meta["default_branch"]
 
 content = None
-for candidate in ("CODEOWNERS", ".github/CODEOWNERS", "docs/CODEOWNERS"):
+# GitHub resolves CODEOWNERS from `.github/`, then the root, then `docs/`.
+for candidate in (".github/CODEOWNERS", "CODEOWNERS", "docs/CODEOWNERS"):
     d = fetch_json(f"/repos/{REPO}/contents/{candidate}?ref={ref}")
     if not d or "content" not in d:
         continue
@@ -753,9 +910,14 @@ sha = ref_data["object"]["sha"]
 
 warnings = []
 
+# Degrade rather than abort, matching how this command already treats its
+# tree, commits and licence reads: one unresolved optional file must not throw
+# away the licence and sign-off findings alongside it. `dco_file_known` lets a
+# caller tell "no DCO" from "could not tell".
 dco_resp, dco_found = fetch_optional_json(f"/repos/{REPO}/contents/DCO?ref={ref}")
-if dco_found is None:
-    fail("legal", f"could not fetch DCO file status from {REPO}")
+dco_known = dco_found is not None
+if not dco_known:
+    warnings.append("could not determine whether a DCO file exists - treat dco_file as unknown")
 dco_present = bool(dco_found and dco_resp and "content" in dco_resp)
 
 # Distinguish None (fetch failure) from empty results so consumers can
@@ -806,6 +968,7 @@ else:
 emit("legal", {
     "default_branch": ref,
     "dco_file": dco_present,
+    "dco_file_known": dco_known,
     "ci_workflows": workflows,
     "ci_workflows_known": workflows_known,
     "signed_off_count": signed,

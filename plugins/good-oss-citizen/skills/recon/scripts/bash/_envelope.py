@@ -84,7 +84,16 @@ def _curl_auth_config():
     # diagnostic) and a newline could inject further curl directives. Current
     # GitHub tokens are alphanumeric, so this is defensive rather than a live
     # bug, but the escaping costs nothing.
-    escaped = token.replace("\\", "\\\\").replace('"', '\\"')
+    # curl's config parser is line-oriented, so a newline in the value starts a
+    # new directive: a token containing "\nproxy = http://attacker" would
+    # silently route every request through that host. Escape the line breaks as
+    # well as the quoting characters.
+    escaped = (
+        token.replace("\\", "\\\\")
+        .replace('"', '\\"')
+        .replace("\r", "\\r")
+        .replace("\n", "\\n")
+    )
     return f'header = "Authorization: Bearer {escaped}"\n'
 
 
@@ -153,7 +162,9 @@ def _parse_response_with_headers(stdout):
                 try:
                     status = int(parts[1])
                 except ValueError:
-                    return None, None
+                    # A proxy can inject an odd status line; that should not
+                    # discard a status already parsed from the real response.
+                    continue
     if status is None:
         return None, None
     if not body.strip():
@@ -177,7 +188,12 @@ def fetch_json_with_status(endpoint):
         gh_result = None
     if gh_result and gh_result.stdout:
         data, status = _parse_response_with_headers(gh_result.stdout)
-        if status is not None:
+        # Only a definitive answer ends the attempt. `fetch` treats any gh
+        # failure as "try curl next", and dropping that here would regress
+        # environments where gh holds a stale token but an unauthenticated
+        # curl still answers: an auth failure would surface as "unknown",
+        # which callers now escalate into a hard failure.
+        if status is not None and (200 <= status < 300 or status == 404):
             return data, status
 
     curl_cmd = ["curl", "-sS", "-H", "Accept: application/vnd.github+json"]
@@ -218,6 +234,16 @@ def fetch_optional_json(endpoint):
     if status == 200 and data is not None:
         return data, True
     return None, None
+
+
+# GitHub resolves community health files from `.github/`, then the repository
+# root, then `docs/`, taking the first hit.
+HEALTH_DIRS = (".github/", "", "docs/")
+
+
+def health_candidates(name):
+    """Candidate paths for one health file, in GitHub's precedence order."""
+    return tuple(f"{d}{name}" for d in HEALTH_DIRS)
 
 
 _install_excepthook()
