@@ -41,7 +41,9 @@ The script returns `data.files` — an array with one entry per policy file (`AI
 
 ## Step 3: Should I work on THIS issue? (issue checks)
 
-Run ALL three commands — these are not optional:
+**If the task names no issue number** — an unsolicited fix, a refactor, a feature proposal — skip this entire step rather than invoking these commands with a placeholder, and continue at Step 4. Both hard stops below are issue-scoped, so neither applies: there is no claim to honor and no restricted label to check. The prior-attempt search still happens, via `prs-closed` and `issues-closed`, which need no issue number; `propose` Step 2 describes that sweep. In the recon report, record section 2 as `N/A — no issue referenced` and source section 8 from `ai-policy` plus that sweep, rather than leaving either section empty or filling it with anything you did not gather.
+
+Otherwise, run ALL three commands — these are not optional:
 ```bash
 bash .tessl/plugins/tessl-labs/good-oss-citizen/skills/recon/scripts/bash/github.sh issue OWNER/REPO ISSUE_NUMBER
 ```
