@@ -74,6 +74,29 @@ def fail(command, message):
     sys.exit(1)
 
 
+def _curl_auth_config():
+    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    if not token:
+        return None
+    # curl parses a double-quoted config value with backslash escapes and ends
+    # it at the first unescaped quote, so a token containing " or \\ would
+    # silently mangle the header (dropping to unauthenticated limits with no
+    # diagnostic) and a newline could inject further curl directives. Current
+    # GitHub tokens are alphanumeric, so this is defensive rather than a live
+    # bug, but the escaping costs nothing.
+    # curl's config parser is line-oriented, so a newline in the value starts a
+    # new directive: a token containing "\nproxy = http://attacker" would
+    # silently route every request through that host. Escape the line breaks as
+    # well as the quoting characters.
+    escaped = (
+        token.replace("\\", "\\\\")
+        .replace('"', '\\"')
+        .replace("\r", "\\r")
+        .replace("\n", "\\n")
+    )
+    return f'header = "Authorization: Bearer {escaped}"\n'
+
+
 def fetch(endpoint):
     """Fetch a GitHub API response body. Returns "" on failure.
 
@@ -93,20 +116,21 @@ def fetch(endpoint):
     a `warnings[]` entry rather than silently emit a partial answer.
     """
     curl_cmd = ["curl", "-sf", "-H", "Accept: application/vnd.github+json"]
-    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
-    if token:
+    curl_config = _curl_auth_config()
+    if curl_config:
         # Curl gets the same authenticated 5000-req/hr limit as gh when a
         # token is in the env. Without this, environments without gh fall
         # back to the 60-req/hr unauthenticated public limit and the
-        # command sweep smoke test would race the limit.
-        curl_cmd += ["-H", f"Authorization: Bearer {token}"]
+        # command sweep smoke test would race the limit. Pass the secret
+        # through stdin config so it is not visible in argv.
+        curl_cmd += ["--config", "-"]
     curl_cmd += [f"{API}{endpoint}"]
 
-    attempts = (["gh", "api", endpoint], curl_cmd)
-    for cmd in attempts:
+    attempts = ((["gh", "api", endpoint], None), (curl_cmd, curl_config))
+    for cmd, stdin in attempts:
         try:
             r = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=TIMEOUT
+                cmd, capture_output=True, input=stdin, text=True, timeout=TIMEOUT
             )
         except (FileNotFoundError, subprocess.TimeoutExpired):
             continue
@@ -124,6 +148,102 @@ def fetch_json(endpoint):
         return json.loads(body)
     except json.JSONDecodeError:
         return None
+
+
+def _parse_response_with_headers(stdout):
+    header_text, separator, body = stdout.replace("\r\n", "\n").partition("\n\n")
+    if not separator:
+        return None, None
+    status = None
+    for line in header_text.split("\n"):
+        if line.startswith("HTTP/"):
+            parts = line.split()
+            if len(parts) >= 2:
+                try:
+                    status = int(parts[1])
+                except ValueError:
+                    # A proxy can inject an odd status line; that should not
+                    # discard a status already parsed from the real response.
+                    continue
+    if status is None:
+        return None, None
+    if not body.strip():
+        return None, status
+    try:
+        return json.loads(body), status
+    except json.JSONDecodeError:
+        return None, status
+
+
+def fetch_json_with_status(endpoint):
+    """Fetch + JSON-decode with HTTP status. Returns (data, status)."""
+    try:
+        gh_result = subprocess.run(
+            ["gh", "api", "-i", endpoint],
+            capture_output=True,
+            text=True,
+            timeout=TIMEOUT,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        gh_result = None
+    if gh_result and gh_result.stdout:
+        data, status = _parse_response_with_headers(gh_result.stdout)
+        # Only a definitive answer ends the attempt. `fetch` treats any gh
+        # failure as "try curl next", and dropping that here would regress
+        # environments where gh holds a stale token but an unauthenticated
+        # curl still answers: an auth failure would surface as "unknown",
+        # which callers now escalate into a hard failure.
+        if status is not None and (200 <= status < 300 or status == 404):
+            return data, status
+
+    curl_cmd = ["curl", "-sS", "-H", "Accept: application/vnd.github+json"]
+    curl_config = _curl_auth_config()
+    if curl_config:
+        curl_cmd += ["--config", "-"]
+    curl_cmd += ["-w", "\n%{http_code}", f"{API}{endpoint}"]
+    try:
+        result = subprocess.run(
+            curl_cmd,
+            capture_output=True,
+            input=curl_config,
+            text=True,
+            timeout=TIMEOUT,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return None, None
+    if result.returncode != 0 or not result.stdout:
+        return None, None
+    body, _, status_text = result.stdout.rpartition("\n")
+    try:
+        status = int(status_text)
+    except ValueError:
+        return None, None
+    if not body.strip():
+        return None, status
+    try:
+        return json.loads(body), status
+    except json.JSONDecodeError:
+        return None, status
+
+
+def fetch_optional_json(endpoint):
+    """Fetch optional JSON. Returns (data, found), with None found on ambiguity."""
+    data, status = fetch_json_with_status(endpoint)
+    if status == 404:
+        return None, False
+    if status == 200 and data is not None:
+        return data, True
+    return None, None
+
+
+# GitHub resolves community health files from `.github/`, then the repository
+# root, then `docs/`, taking the first hit.
+HEALTH_DIRS = (".github/", "", "docs/")
+
+
+def health_candidates(name):
+    """Candidate paths for one health file, in GitHub's precedence order."""
+    return tuple(f"{d}{name}" for d in HEALTH_DIRS)
 
 
 _install_excepthook()

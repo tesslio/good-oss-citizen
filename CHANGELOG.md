@@ -2,6 +2,29 @@
 
 All notable changes to the `good-oss-citizen` plugin are recorded here. The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the plugin follows semver via the `tesslio/patch-version-publish@v1` GitHub Action.
 
+## [Unreleased]
+
+### Fixed — Keep the GitHub token out of the curl command line
+
+When `gh` is not available, the scripts fall back to `curl`. The token was passed as a command line argument, so anyone with access to the same machine could read it with `ps`. It is now sent to curl through stdin instead. Quotes, backslashes and line breaks in the value are escaped, so a token cannot add its own curl options.
+
+`fetch_json` returns `None` both when a file does not exist and when the request fails. `legal` could not tell those apart, so a failed request was reported as "no DCO file". That is a confident wrong answer about a legal requirement. New helpers also return the HTTP status, and `legal` now fails loudly when it cannot tell.
+
+### Fixed — Look for policy files outside the repository root
+
+GitHub looks for files like `CONTRIBUTING.md` in `.github/` first, then in the root, then in `docs/`. Our commands only looked in the root, so a project that keeps these files in `.github/` looked like it had no contribution guide and no AI policy.
+
+That matters: recon would report "no AI policy, voluntary disclosure recommended" for a project that does document its rules. On `hashicorp/terraform` the old code found nothing. The new code finds a 32,925 byte `.github/CONTRIBUTING.md`.
+
+`repo-scan`, `ai-policy`, `disclosure-format`, `contributing-requirements` and `codeowners` now use the same order as GitHub and stop at the first file they can read. `README.md` and `CODEOWNERS` are found the same way. `LICENSE` and `DCO` stay in the root, because GitHub only looks there.
+
+Smaller fixes in the same area:
+
+- `disclosure-format` collected warnings and then dropped them. It returns them now.
+- A file that is not valid UTF-8 is skipped, and the next location is tried.
+- `legal` reports `dco_file_known`, and keeps its other results when the DCO check fails.
+- `repo-scan` warns when GitHub cut the file list short, so `missing` is not read as "not there".
+
 ## [1.1.12] — 2026-06-09
 
 ### Added — Maintainer-installable contribution gate (`install-gate` skill)
