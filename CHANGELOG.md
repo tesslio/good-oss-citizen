@@ -2,6 +2,18 @@
 
 All notable changes to the `good-oss-citizen` plugin are recorded here. The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the plugin follows semver via the `tesslio/patch-version-publish@v1` GitHub Action.
 
+## [Unreleased]
+
+### Fixed — `pr-comments` now reads pull request reviews
+
+`pr-comments` only read the conversation comments. On a pull request, a maintainer usually explains a rejection in a review, or in a comment on a line of code. Neither of those appeared, so the command could not answer the question `propose` uses it for: why was this rejected?
+
+It now also reads the reviews and the inline comments, marks every entry with a `kind`, and returns them in time order. `issue-comments` keeps the same shape as before.
+
+A review is kept even when its summary is empty. Maintainers often click "Request changes" and write all the reasons inline. On `webdriverio#4566`, three of five such reviews have no summary, so dropping them would hide the rejection.
+
+If one of the two new requests fails, the command still returns the comments it did read and adds a warning. This happens when the number belongs to an issue instead of a pull request.
+
 ## [1.1.12] — 2026-06-09
 
 ### Added — Maintainer-installable contribution gate (`install-gate` skill)

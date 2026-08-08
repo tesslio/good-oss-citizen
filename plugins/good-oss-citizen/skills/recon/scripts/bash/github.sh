@@ -159,25 +159,107 @@ PYEOF
     issue-comments|pr-comments)
         REPO="$REPO" ARG="$ARG" CMD="$COMMAND" python3 <<'PYEOF'
 import os
-from _envelope import emit, fail, fetch_json
+from _envelope import emit, fail, fetch_json_pages
 
 REPO = os.environ["REPO"]
 ARG = os.environ["ARG"]
 CMD = os.environ["CMD"]
-comments = fetch_json(f"/repos/{REPO}/issues/{ARG}/comments")
-if comments is None:
-    fail(CMD, f"could not fetch comments for {ARG} on {REPO}")
 
-emit(CMD, {
-    "comments": [
+warnings = []
+
+
+def collect(endpoint, label, required):
+    """Fetch a discussion endpoint.
+
+    `required` endpoints fail the command; supplementary ones degrade to a
+    warning. `pr-comments` is routinely pointed at an issue number, where the
+    pull-request endpoints legitimately 404, and an exhausted rate limit is
+    indistinguishable from that here — neither should discard the conversation
+    comments that were already read.
+
+    Truncation is a hard failure rather than a warning: pages ascend, so
+    hitting the ceiling drops the newest entries, and the newest entries are
+    where a maintainer records the verdict. Returning ok=true while silently
+    omitting the verdict is the one outcome this command must not produce.
+    """
+    items, complete = fetch_json_pages(endpoint)
+    if items is None:
+        if required:
+            fail(CMD, f"could not fetch {label} for {ARG} on {REPO}")
+        warnings.append(f"could not fetch {label} — this answer may be incomplete")
+        return []
+    if not complete:
+        # The verdict lives at the tail, so a truncated read of the required
+        # conversation is not safe to present as success. A supplementary
+        # endpoint is different: discarding reviews already in hand because
+        # a thousand-plus inline comments exist would throw away the very
+        # thing this command exists to surface.
+        if required:
+            fail(CMD, f"{label} for {ARG} on {REPO} exceeded the pagination ceiling")
+        warnings.append(f"{label} exceeded the pagination ceiling - newest entries are missing")
+    return items
+
+
+def user_login(item):
+    user = item.get("user") if isinstance(item, dict) else None
+    return user.get("login", "") if isinstance(user, dict) else ""
+
+
+conversation = collect(f"/repos/{REPO}/issues/{ARG}/comments", "comments", required=True)
+entries = [
+    {
+        "user": user_login(c),
+        # `.get(key, "")` still yields None when the key is present and null,
+        # which breaks consumers that treat these as strings.
+        "created_at": c.get("created_at") or "",
+        "body": c.get("body") or "",
+    }
+    for c in conversation
+]
+
+if CMD == "pr-comments":
+    # A maintainer's verdict on a pull request is usually written as a review
+    # body ("requesting changes because ...") or as an inline comment on a
+    # line, neither of which appears on the issues/comments endpoint. Reading
+    # only conversation comments therefore misses the reason a PR was rejected.
+    for entry in entries:
+        entry["kind"] = "conversation"
+
+    reviews = collect(f"/repos/{REPO}/pulls/{ARG}/reviews", "reviews", required=False)
+    entries += [
         {
-            "user": c.get("user", {}).get("login", ""),
-            "created_at": c.get("created_at", ""),
-            "body": c.get("body", ""),
+            "user": user_login(r),
+            "created_at": r.get("submitted_at") or "",
+            "body": r.get("body") or "",
+            "state": r.get("state") or "",
+            "kind": "review",
         }
-        for c in comments
+        for r in reviews
+        # Keep any review carrying a verdict even when its summary is empty:
+        # a maintainer can request changes and write every reason inline. On
+        # webdriverio#4566, three of five CHANGES_REQUESTED reviews have no
+        # body, so filtering on body alone hides the rejection entirely. Only
+        # a bodyless COMMENTED review is genuinely empty.
+        if (r.get("body") or "").strip() or (r.get("state") or "") != "COMMENTED"
     ]
-})
+
+    review_comments = collect(f"/repos/{REPO}/pulls/{ARG}/comments", "review comments", required=False)
+    entries += [
+        {
+            "user": user_login(c),
+            "created_at": c.get("created_at") or "",
+            "body": c.get("body") or "",
+            "path": c.get("path") or "",
+            "line": c.get("line") or c.get("original_line"),
+            "kind": "review_comment",
+        }
+        for c in review_comments
+    ]
+
+# A PENDING review has a null submitted_at, which would otherwise sort an
+# unsubmitted private draft ahead of everything actually said on the PR.
+entries.sort(key=lambda c: (c.get("created_at") or "\uffff", c.get("kind") or ""))
+emit(CMD, {"comments": entries}, warnings=warnings)
 PYEOF
         ;;
 

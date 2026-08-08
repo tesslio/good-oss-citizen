@@ -26,12 +26,14 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from unittest import mock
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT_DIR = REPO_ROOT / "plugins" / "good-oss-citizen" / "skills" / "recon" / "scripts" / "bash"
 GITHUB_SH = SCRIPT_DIR / "github.sh"
 sys.path.insert(0, str(SCRIPT_DIR))
 from _templates import issue_template_dir_paths  # noqa: E402
+import _envelope  # noqa: E402
 
 # (command-name, args-template, expected-ok). args-template uses {repo} and
 # {issue_number}/{pr_number}/{file_path} placeholders.
@@ -88,6 +90,43 @@ def assert_issue_template_config_excluded() -> None:
         ".github/ISSUE_TEMPLATE/bug.yml",
         ".github/ISSUE_TEMPLATE/feature.md",
     ], "extension filter must apply on top of the config exclusion"
+
+
+def assert_pagination_ceiling_semantics() -> None:
+    """Regression guard: paging is complete-flagged and bounded."""
+    # Two short pages -> complete.
+    pages = iter([[{"i": n} for n in range(100)], [{"i": 100}]])
+    with mock.patch.object(_envelope, "fetch_json", side_effect=lambda e: next(pages)):
+        items, complete = _envelope.fetch_json_pages("/x")
+    assert len(items) == 101 and complete is True, "short final page means complete"
+
+    # Always-full pages -> stops at the ceiling and reports incomplete.
+    with mock.patch.object(_envelope, "fetch_json", side_effect=lambda e: [{"i": 0}] * 100):
+        items, complete = _envelope.fetch_json_pages("/x")
+    assert complete is False, "hitting the ceiling must report incomplete"
+    assert len(items) == _envelope.MAX_PAGES * 100, "must stop at MAX_PAGES"
+
+    # Exactly MAX_PAGES * 100 items: every page is full, but there is no more
+    # data. The probe past the ceiling must distinguish this from truncation,
+    # otherwise a complete read is reported as incomplete.
+    pages = [[{"i": 0}] * 100] * _envelope.MAX_PAGES + [[]]
+    served = iter(pages)
+    with mock.patch.object(_envelope, "fetch_json", side_effect=lambda e: next(served)):
+        items, complete = _envelope.fetch_json_pages("/x")
+    assert complete is True, "an empty probe page means the read was complete"
+    assert len(items) == _envelope.MAX_PAGES * 100
+
+    # A failed page -> (None, False), never a partial silent answer.
+    with mock.patch.object(_envelope, "fetch_json", side_effect=lambda e: None):
+        assert _envelope.fetch_json_pages("/x") == (None, False)
+
+    # Query-string endpoints keep their existing params.
+    seen = []
+    with mock.patch.object(
+        _envelope, "fetch_json", side_effect=lambda e: (seen.append(e), [])[1]
+    ):
+        _envelope.fetch_json_pages("/repos/o/r/pulls?state=closed")
+    assert "state=closed&per_page=100&page=1" in seen[0], seen
 
 
 def run(cmd_name: str, args: list[str]) -> tuple[int, str]:
@@ -151,6 +190,8 @@ def main() -> int:
     try:
         assert_issue_template_config_excluded()
         print("PASS static-regression (ISSUE_TEMPLATE config.yml excluded)")
+        assert_pagination_ceiling_semantics()
+        print("PASS static-regression (pagination ceiling semantics)")
     except AssertionError as e:
         print(f"FAIL static-regression: {e}", file=sys.stderr)
         return 1
