@@ -738,7 +738,7 @@ PYEOF
     legal)
         REPO="$REPO" python3 <<'PYEOF'
 import os
-from _envelope import emit, fail, fetch_json
+from _envelope import emit, fail, fetch_json, fetch_optional_json
 
 REPO = os.environ["REPO"]
 repo_meta = fetch_json(f"/repos/{REPO}")
@@ -753,14 +753,10 @@ sha = ref_data["object"]["sha"]
 
 warnings = []
 
-# A 404 on the DCO endpoint legitimately means "no DCO file"; a
-# network/auth failure also returns None. fetch_json can't distinguish
-# the two, so dco_file is best-effort: False here means "we got nothing
-# back at all", which encompasses both the absent-file and fetch-failed
-# cases. There's no `dco_file_known` flag because there's no operation
-# we could do to disambiguate without false certainty.
-dco_resp = fetch_json(f"/repos/{REPO}/contents/DCO?ref={ref}")
-dco_present = bool(dco_resp and "content" in dco_resp)
+dco_resp, dco_found = fetch_optional_json(f"/repos/{REPO}/contents/DCO?ref={ref}")
+if dco_found is None:
+    fail("legal", f"could not fetch DCO file status from {REPO}")
+dco_present = bool(dco_found and dco_resp and "content" in dco_resp)
 
 # Distinguish None (fetch failure) from empty results so consumers can
 # trust an absent ci_workflows / signed_off_total reading.
